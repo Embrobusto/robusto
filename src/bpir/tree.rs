@@ -4,7 +4,7 @@
 /// - parser generation;
 /// - serializer generation with human-readable entities;
 ///
-/// The idea is to be stupid, straightforward solution with 1-to-1 mapping
+/// The idea is to make a stupid, straightforward solution with 1-to-1 mapping
 /// from user entities to parser/serializer backend, and vice versa.
 ///
 /// Example:
