@@ -78,12 +78,14 @@ pub enum FieldAttribute {
     Checksum{algorithm: std::string::String},
 }
 
+/// Represents a protocol's message as a sequence of bytes
 pub struct Message {
     name: std::string::String,
     fields: std::vec::Vec<Field>,
 }
 
-/// Regular field, such as byte sequence of fixed length, or u32
+/// May be a regular field, such as byte sequence of fixed length, or u32, or a
+/// payload (nested message))
 pub struct Field {
     name: std::string::String,
     attributes: std::vec::Vec<FieldAttribute>,
