@@ -90,3 +90,8 @@ pub struct Field {
     name: std::string::String,
     attributes: std::vec::Vec<FieldAttribute>,
 }
+
+/// Represents the entire protocol as a set of messages
+pub struct Protocol {
+    messages: std::vec::Vec<Message>,
+}
