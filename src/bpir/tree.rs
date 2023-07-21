@@ -17,7 +17,7 @@
 ///     checksum_crc32: u32,
 /// }
 ///
-/// Here's how its representation would look like:
+/// Here's what its representation would look like:
 ///
 /// ```rust
 /// // `SimpleUserMessage` message
