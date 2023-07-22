@@ -63,7 +63,7 @@ impl CAst {
             Ast::MachineHeader{machine_name} => {
                 buf_writer.write_fmt(format_args!(
                     "{}\n
-                    \tmachine {:?}\n;
+                    \tmachine {:?};\n
                     \twrite data;\n
                     {}", "%%{", machine_name, "%%}"
                 ));
