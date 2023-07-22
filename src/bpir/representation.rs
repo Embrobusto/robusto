@@ -51,6 +51,7 @@
 ///
 
 pub use std;
+use log;
 
 /// Every field is modified with a set of attributes, such as
 /// - length (if the field is of constant length);
@@ -63,8 +64,10 @@ pub enum FieldAttribute {
 
     /// Expect a certain sequence of bytes
     ExpectConstSequence(std::vec::Vec<u8>),
+}
 
-    /// The protocol's root message
+pub enum MessageAttribute {
+    /// This message is the core of the protocol, which nests every other one
     Root,
 }
 
@@ -72,6 +75,7 @@ pub enum FieldAttribute {
 pub struct Message {
     name: std::string::String,
     fields: std::vec::Vec<Field>,
+    attributes: std::vec::Vec<MessageAttribute>,
 }
 
 /// May be a regular field, such as byte sequence of fixed length, or u32, or a
@@ -84,4 +88,24 @@ pub struct Field {
 /// Represents the entire protocol as a set of messages
 pub struct Protocol {
     messages: std::vec::Vec<Message>,
+}
+
+impl Protocol {
+    /// Gets the root message. If absent, the first message is considered root
+    fn root_message(&self) -> &Message {
+        if self.messages.len() == 0 {
+            log::error!("Empty messages list. Panicking");
+            panic!();
+        }
+
+        for message in &self.messages {
+            for attribute in &message.attributes {
+                if let MessageAttribute::Root = attribute {
+                    return message;
+                }
+            }
+        }
+
+        &self.messages[0]
+    }
 }
