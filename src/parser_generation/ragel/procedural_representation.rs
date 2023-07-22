@@ -12,21 +12,25 @@ pub use std;
 use crate::bpir;
 use log;
 
+/// Represents an abstract syntactic tree for Ragel code, with the difference
+/// that its leaves mostly consist of snippets rather than atomic language
+/// constructs, i.e. it is a less detailed representation of Ragel code.
+///
 #[derive(Debug)]
-pub enum Block {
-    FileBody{blocks: std::vec::Vec<Block>},
+pub enum Ast {
+    Sequence{blocks: std::vec::Vec<Ast>},
     MachineHeader{machine_name: std::string::String},
     ParsingFunction{
         user_context_struct_name: std::string::String,
     }
 }
 
-impl Block {
+impl Ast {
     fn add_machine_header(&mut self, protocol: &bpir::representation::Protocol) {
-        if let Block::FileBody{ref mut blocks} = self {
+        if let Ast::Sequence{ref mut blocks} = self {
             let root_message = protocol.root_message();
 
-            blocks.push(Block::MachineHeader{machine_name: root_message.name.clone()});
+            blocks.push(Ast::MachineHeader{machine_name: root_message.name.clone()});
 
             return
         }
@@ -36,7 +40,7 @@ impl Block {
     }
 
     fn add_parsing_function(&mut self, protocol: &bpir::representation::Protocol) {
-        if let Block::FileBody{ref mut blocks} = self {
+        if let Ast::Sequence{ref mut blocks} = self {
             let root_message_name = protocol.root_message().name.clone();
             // TODO: add actions, and the rest of regular ragel stuff
 
@@ -47,8 +51,8 @@ impl Block {
         panic!();
     }
 
-    pub fn new_from_protocol(protocol: &bpir::representation::Protocol) -> Block {
-        let mut block = Block::FileBody{blocks: std::vec::Vec::new()};
+    pub fn new_from_protocol(protocol: &bpir::representation::Protocol) -> Ast {
+        let mut block = Ast::Sequence{blocks: std::vec::Vec::new()};
         block.add_machine_header(protocol);
 
         block
