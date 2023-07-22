@@ -17,6 +17,9 @@ use log;
 /// constructs, i.e. it is a less detailed representation of Ragel code.
 #[derive(Debug)]
 pub enum Ast {
+    // C-specific elements
+
+    // Language-agnostic elements
     Sequence{blocks: std::vec::Vec<Ast>},
     MachineHeader{machine_name: std::string::String},
     ParsingFunction{
@@ -57,4 +60,3 @@ impl Ast {
         block
     }
 }
-
