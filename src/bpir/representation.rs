@@ -73,26 +73,26 @@ pub enum MessageAttribute {
 
 /// Represents a protocol's message as a sequence of bytes
 pub struct Message {
-    name: std::string::String,
-    fields: std::vec::Vec<Field>,
-    attributes: std::vec::Vec<MessageAttribute>,
+    pub name: std::string::String,
+    pub fields: std::vec::Vec<Field>,
+    pub attributes: std::vec::Vec<MessageAttribute>,
 }
 
 /// May be a regular field, such as byte sequence of fixed length, or u32, or a
 /// payload (nested message))
 pub struct Field {
-    name: std::string::String,
-    attributes: std::vec::Vec<FieldAttribute>,
+    pub name: std::string::String,
+    pub attributes: std::vec::Vec<FieldAttribute>,
 }
 
 /// Represents the entire protocol as a set of messages
 pub struct Protocol {
-    messages: std::vec::Vec<Message>,
+    pub messages: std::vec::Vec<Message>,
 }
 
 impl Protocol {
     /// Gets the root message. If absent, the first message is considered root
-    fn root_message(&self) -> &Message {
+    pub fn root_message(&self) -> &Message {
         if self.messages.len() == 0 {
             log::error!("Empty messages list. Panicking");
             panic!();
