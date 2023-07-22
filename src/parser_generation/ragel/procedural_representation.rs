@@ -15,7 +15,6 @@ use log;
 /// Represents an abstract syntactic tree for Ragel code, with the difference
 /// that its leaves mostly consist of snippets rather than atomic language
 /// constructs, i.e. it is a less detailed representation of Ragel code.
-///
 #[derive(Debug)]
 pub enum Ast {
     Sequence{blocks: std::vec::Vec<Ast>},
