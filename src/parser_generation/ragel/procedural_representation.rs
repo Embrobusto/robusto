@@ -6,3 +6,16 @@
 ///
 /// - Support for C-like `struct`s;
 /// - Support for functions accepting mutable pointers;
+
+pub use std;
+use crate::bpir;
+
+pub enum Block {
+    Block{blocks: std::vec::Vec<Block>},
+}
+
+pub fn generate(protocol: &bpir::representation::Protocol) -> Block {
+    let mut block = Block::Block{blocks: std::vec::Vec::new()};
+
+    block
+}
