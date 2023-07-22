@@ -64,18 +64,8 @@ pub enum FieldAttribute {
     /// Expect a certain sequence of bytes
     ExpectConstSequence(std::vec::Vec<u8>),
 
-    /// Interpret the payload as a message
-    InterpretAsMessageById,
-
-    /// From the first byte of this field, checksum calculation (such as CRC32)
-    /// calculation is started
-    StartChecksum{algorithm: std::string::String},
-
-    /// At the last byte of this field, checksum calculation (such as CRC32)
-    /// will be stopped
-    StopChecksum,
-
-    Checksum{algorithm: std::string::String},
+    /// The protocol's root message
+    Root,
 }
 
 /// Represents a protocol's message as a sequence of bytes
