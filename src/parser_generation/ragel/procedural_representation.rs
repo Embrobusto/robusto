@@ -5,17 +5,53 @@
 /// features:
 ///
 /// - Support for C-like `struct`s;
-/// - Support for functions accepting mutable pointers;
+/// - Support for functions;
+/// - Support for mutable pointers or similar entities;
 
 pub use std;
 use crate::bpir;
+use log;
 
+#[derive(Debug)]
 pub enum Block {
     Block{blocks: std::vec::Vec<Block>},
+    MachineHeader{machine_name: std::string::String},
+    ParsingFunction{
+        user_context_struct_name: std::string::String,
+    }
 }
 
-pub fn generate(protocol: &bpir::representation::Protocol) -> Block {
-    let mut block = Block::Block{blocks: std::vec::Vec::new()};
+impl Block {
+    fn add_machine_header(&mut self, protocol: &bpir::representation::Protocol) {
+        if let Block::Block{ref mut blocks} = self {
+            let root_message = protocol.root_message();
 
-    block
+            blocks.push(Block::MachineHeader{machine_name: root_message.name.clone()});
+
+            return
+        }
+
+        log::error!("Unable to add machine header into a block of type {:?}", self);
+        panic!();
+    }
+
+    fn add_parsing_function(&mut self, protocol: &bpir::representation::Protocol) {
+        if let Block::Block{ref mut blocks} = self {
+            let root_message_name = protocol.root_message().name.clone();
+            // TODO: add actions, and the rest of regular ragel stuff
+
+            return
+        }
+
+        log::error!("Unable to add machine header into a block of type {:?}", self);
+        panic!();
+    }
+
+    pub fn new_from_protocol(protocol: &bpir::representation::Protocol) -> Block {
+        let mut block = Block::Block{blocks: std::vec::Vec::new()};
+        block.add_machine_header(protocol);
+
+        block
+    }
 }
+
