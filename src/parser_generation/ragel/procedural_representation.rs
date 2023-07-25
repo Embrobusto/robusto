@@ -56,6 +56,7 @@ impl Ast {
     pub fn new_from_protocol(protocol: &bpir::representation::Protocol) -> Ast {
         let mut block = Ast::Sequence{blocks: std::vec::Vec::new()};
         block.add_machine_header(protocol);
+        block.add_parsing_function(protocol);
 
         block
     }
