@@ -82,5 +82,7 @@ impl CAst {
 
 impl parser_generation::Generate for CAst {
     fn generate<W: std::io::Write>(&self, buf_writer: &mut std::io::BufWriter<W>) {
+        let mut generation_state = GenerationState::new();
+        CAst::generate_impl(&mut generation_state, &self.ast, buf_writer);
     }
 }
