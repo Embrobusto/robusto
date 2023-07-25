@@ -65,13 +65,14 @@ impl CAst {
                     "%%{{\n
                     \tmachine {:?};\n
                     \twrite data;\n
-                    %%}}", machine_name,
+                    %%}}\n", machine_name,
                 ));
             },
             Ast::ParsingFunction{user_context_struct_name} => {
                 buf_writer.write_fmt(format_args!(
-                    "void parse(char *string, char *length) {} \n
-                    ", "{"
+                    "void parse(char *string, char *length) \n
+                    {{\n
+                    }}\n"
                 ));
             },
             _ => {}
