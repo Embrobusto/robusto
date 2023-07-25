@@ -41,7 +41,7 @@ pub struct CAst {
 }
 
 impl CAst {
-    fn new_from_protocol(protocol: &bpir::representation::Protocol) -> CAst {
+    pub fn new_from_protocol(protocol: &bpir::representation::Protocol) -> CAst {
         CAst{
             ast: parser_generation::ragel::procedural_representation::Ast::new_from_protocol(protocol),
         }
