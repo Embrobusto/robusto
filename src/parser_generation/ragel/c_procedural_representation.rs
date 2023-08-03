@@ -66,10 +66,12 @@ impl CAst {
 "%%{{
     machine {machine_name};
     write data;
-%%}}"
+%%}}
+
+"
                 ));
             },
-            Ast::ParsingFunction{user_context_struct_name} => {
+            Ast::ParsingFunction => {
                 buf_writer.write_fmt(format_args!(
 "void parse(char *string, char *length)
 {{
