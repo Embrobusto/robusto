@@ -20,18 +20,21 @@ pub enum Ast {
     // C-specific elements
 
     // Language-agnostic elements
+
+    /// Generic sequence of AST nodes
     Sequence{blocks: std::vec::Vec<Ast>},
+
+    /// Ragel-specific machine header
     MachineHeader{machine_name: std::string::String},
-    ParsingFunction{
-        user_context_struct_name: std::string::String,
-    }
+
+    /// Entry point to the parser
+    ParsingFunction
 }
 
 impl Ast {
     fn add_machine_header(&mut self, protocol: &bpir::representation::Protocol) {
         if let Ast::Sequence{ref mut blocks} = self {
             let root_message = protocol.root_message();
-
             blocks.push(Ast::MachineHeader{machine_name: root_message.name.clone()});
 
             return
@@ -44,7 +47,8 @@ impl Ast {
     fn add_parsing_function(&mut self, protocol: &bpir::representation::Protocol) {
         if let Ast::Sequence{ref mut blocks} = self {
             let root_message_name = protocol.root_message().name.clone();
-            // TODO: add actions, and the rest of regular ragel stuff
+            blocks.push(Ast::ParsingFunction);
+            // TODO: parsing function will require a bit more than that
 
             return
         }
