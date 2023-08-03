@@ -54,6 +54,7 @@ impl CAst {
         use parser_generation::ragel::procedural_representation::Ast;
         use std::io::Write;
 
+        // Convert AST into the actual Ragel+C code
         match ast {
             Ast::Sequence{ref blocks} => {
                 for block in blocks {
@@ -62,17 +63,17 @@ impl CAst {
             },
             Ast::MachineHeader{machine_name} => {
                 buf_writer.write_fmt(format_args!(
-                    "%%{{\n
-                    \tmachine {:?};\n
-                    \twrite data;\n
-                    %%}}\n", machine_name,
+"%%{{
+    machine {machine_name};
+    write data;
+%%}}"
                 ));
             },
             Ast::ParsingFunction{user_context_struct_name} => {
                 buf_writer.write_fmt(format_args!(
-                    "void parse(char *string, char *length) \n
-                    {{\n
-                    }}\n"
+"void parse(char *string, char *length)
+{{
+}}"
                 ));
             },
             _ => {}
