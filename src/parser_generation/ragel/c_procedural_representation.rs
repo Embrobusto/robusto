@@ -3,6 +3,7 @@
 use crate::bpir;
 use crate::parser_generation;
 use std;
+use log;
 
 struct GenerationState {
     /// Current indentation level
@@ -55,6 +56,7 @@ impl CAst {
         use std::io::Write;
 
         // Convert AST into the actual Ragel+C code
+        // TODO: split this into submethods
         match ast {
             Ast::Sequence{ref blocks} => {
                 for block in blocks {
@@ -78,7 +80,9 @@ impl CAst {
 }}"
                 ));
             },
-            _ => {}
+            _ => {
+                log::warn!("Unhandled element");
+            }
         }
     }
 }
