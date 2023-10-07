@@ -17,9 +17,9 @@ use log;
 /// constructs, i.e. it is a less detailed representation of Ragel code.
 #[derive(Debug)]
 pub enum Ast {
-    // C-specific elements
+    // C-specific elements (TBD)
 
-    // Language-agnostic elements
+    // Language-agnostic elements (TBD)
 
     /// Generic sequence of AST nodes
     Sequence{blocks: std::vec::Vec<Ast>},
