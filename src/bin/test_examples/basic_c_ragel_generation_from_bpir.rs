@@ -20,13 +20,13 @@ fn make_message_bpir() -> robusto::bpir::representation::Message {
 	message.fields.push(robusto::bpir::representation::Field{
 		name: std::string::String::from("preamble"),
 		attributes: vec![
-			robusto::bpir::representation::FieldAttribute::ExpectConstSequence(vec![0xfe]),
+			robusto::bpir::representation::FieldAttribute::ConstSequence(vec![0xfe]),
 		]
 	});
 	message.fields.push(robusto::bpir::representation::Field{
 		name: std::string::String::from("payload"),
 		attributes: vec![
-			robusto::bpir::representation::FieldAttribute::ExpectLength(3),
+			robusto::bpir::representation::FieldAttribute::Length(3),
 		]
 	});
 
