@@ -1,2 +1,2 @@
-pub mod c_procedural_representation;
+pub mod c;
 pub mod procedural_representation;
