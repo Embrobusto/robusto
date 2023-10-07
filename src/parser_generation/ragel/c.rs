@@ -73,7 +73,7 @@ impl Generator {
 "
                 ));
             },
-            common::Ast::ParsingFunction => {
+            common::Ast::ParsingFunction{ref message_name}=> {
                 buf_writer.write_fmt(format_args!(
 "void parse(char *string, char *length)
 {{
