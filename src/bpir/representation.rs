@@ -11,42 +11,41 @@
 ///
 /// Consider the message of the following structure:
 ///
+///
 /// struct SimpleUserMessage {
 ///	    sync: u8 = 0xFE,
 ///     payload: u8[4],
 ///     checksum_crc32: u32,
 /// }
 ///
+///
 /// Here's what its representation would look like:
 ///
 /// ```rust
 /// // `SimpleUserMessage` message
+/// use robusto::bpir::representation::Message;
+/// use robusto::bpir::representation::Field;
+/// use robusto::bpir::representation::FieldAttribute;
 /// let bpir = Message {
-///     name: "SimpleUserMessage",
+///     name: std::string::String::from("SimpleUserMessage"),
 ///     fields: vec![
 ///         // `sync`
 ///         Field {
-///             name: std::string::String::new("sync"),
+///             name: std::string::String::from("sync"),
 ///             attributes: vec![
-///                 FieldAttribute::ExpectConstValue(vec![0xfe as u8]),
+///                 FieldAttribute::ConstSequence(vec![0xfe as u8]),
 ///             ]
 ///         },
 ///         // `payload`
 ///         Field {
-///             name: std::string::String::new("payload"),
+///             name: std::string::String::from("payload"),
 ///             attributes: vec![
-///                 FieldAttribute::ExpectLength(4u),
-///             ]
-///         },
-///         Field {
-///             name: std::string::String::new("checksum"),
-///             attributes: vec![
-///                 FieldAttribute::Checksum(std::string::String::new("crc32")),
-///                 FieldAttribute::ExpectLength(4),
+///                 FieldAttribute::Length(4usize),
 ///             ]
 ///         },
 ///     ],
-/// }
+///     attributes: vec![]
+/// };
 /// ```
 ///
 
