@@ -58,10 +58,10 @@ use log;
 /// - hooks (for calculating checksums),
 /// etc.
 pub enum FieldAttribute {
-    /// ed length
+    /// Expected length
     Length(usize),
 
-    ///  a certain sequence of bytes
+    /// Expect a certain sequence of bytes
     ConstSequence(std::vec::Vec<u8>),
 }
 
