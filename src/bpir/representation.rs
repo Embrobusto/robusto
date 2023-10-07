@@ -58,11 +58,11 @@ use log;
 /// - hooks (for calculating checksums),
 /// etc.
 pub enum FieldAttribute {
-    /// Expected length
-    ExpectLength(usize),
+    /// ed length
+    Length(usize),
 
-    /// Expect a certain sequence of bytes
-    ExpectConstSequence(std::vec::Vec<u8>),
+    ///  a certain sequence of bytes
+    ConstSequence(std::vec::Vec<u8>),
 }
 
 pub enum MessageAttribute {
