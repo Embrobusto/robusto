@@ -40,6 +40,6 @@ fn main() {
 	let protocol = robusto::bpir::representation::Protocol{messages: vec![make_message_bpir()]};
 	let file = std::fs::File::create(OUTPUT_FILE_NAME).unwrap();
 	let mut buf_writer = std::io::BufWriter::new(file);
-	let c_ast = robusto::parser_generation::ragel::c_procedural_representation::CAst::new_from_protocol(&protocol);
+	let c_ast = robusto::parser_generation::ragel::c::Generator::new_from_protocol(&protocol);
 	c_ast.generate(&mut buf_writer);
 }

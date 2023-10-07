@@ -37,33 +37,33 @@ impl GenerationState {
 }
 
 /// C-specific Ragel AST
-pub struct CAst {
-    ast: parser_generation::ragel::procedural_representation::Ast
+pub struct Generator {
+    ast: parser_generation::ragel::common::Ast
 }
 
-impl CAst {
-    pub fn new_from_protocol(protocol: &bpir::representation::Protocol) -> CAst {
-        CAst{
-            ast: parser_generation::ragel::procedural_representation::Ast::new_from_protocol(protocol),
+impl Generator {
+    pub fn new_from_protocol(protocol: &bpir::representation::Protocol) -> Generator {
+        Generator{
+            ast: parser_generation::ragel::common::Ast::new_from_protocol(protocol),
         }
     }
 
     fn generate_impl<W: std::io::Write>(generation_state: &mut GenerationState,
-        ast: &parser_generation::ragel::procedural_representation::Ast,
+        ast: &parser_generation::ragel::common::Ast,
         buf_writer: &mut std::io::BufWriter<W>
     ) {
-        use parser_generation::ragel::procedural_representation::Ast;
+        use parser_generation::ragel::common;
         use std::io::Write;
 
         // Convert AST into the actual Ragel+C code
         // TODO: split this into submethods
         match ast {
-            Ast::Sequence{ref blocks} => {
+            common::Ast::Sequence{ref blocks} => {
                 for block in blocks {
-                    CAst::generate_impl(generation_state, block, buf_writer);
+                    Generator::generate_impl(generation_state, block, buf_writer);
                 }
             },
-            Ast::MachineHeader{machine_name} => {
+            common::Ast::MachineHeader{machine_name} => {
                 buf_writer.write_fmt(format_args!(
 "%%{{
     machine {machine_name};
@@ -73,7 +73,7 @@ impl CAst {
 "
                 ));
             },
-            Ast::ParsingFunction => {
+            common::Ast::ParsingFunction => {
                 buf_writer.write_fmt(format_args!(
 "void parse(char *string, char *length)
 {{
@@ -87,9 +87,9 @@ impl CAst {
     }
 }
 
-impl parser_generation::Generate for CAst {
+impl parser_generation::Generate for Generator {
     fn generate<W: std::io::Write>(&self, buf_writer: &mut std::io::BufWriter<W>) {
         let mut generation_state = GenerationState::new();
-        CAst::generate_impl(&mut generation_state, &self.ast, buf_writer);
+        Generator::generate_impl(&mut generation_state, &self.ast, buf_writer);
     }
 }
