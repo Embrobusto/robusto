@@ -28,14 +28,16 @@ pub enum Ast {
     MachineHeader{machine_name: std::string::String},
 
     /// Entry point to the parser
-    ParsingFunction
+    ParsingFunction {
+        /// Name of the message which the parsing function is associated with
+        message_name: std::string::String,
+    }
 }
 
 impl Ast {
-    fn add_machine_header(&mut self, protocol: &bpir::representation::Protocol) {
+    fn add_machine_header(&mut self, message: &bpir::representation::Message) {
         if let Ast::Sequence{ref mut blocks} = self {
-            let root_message = protocol.root_message();
-            blocks.push(Ast::MachineHeader{machine_name: root_message.name.clone()});
+            blocks.push(Ast::MachineHeader{machine_name: message.name.clone()});
 
             return
         }
@@ -44,10 +46,12 @@ impl Ast {
         panic!();
     }
 
-    fn add_parsing_function(&mut self, protocol: &bpir::representation::Protocol) {
+    fn add_parsing_function(&mut self, message: &bpir::representation::Message) {
         if let Ast::Sequence{ref mut blocks} = self {
-            let root_message_name = protocol.root_message().name.clone();
-            blocks.push(Ast::ParsingFunction);
+            let message_name = message.name.clone();
+            blocks.push(Ast::ParsingFunction{
+                message_name: message.name.clone(),
+            });
             // TODO: parsing function will require a bit more than that
 
             return
@@ -59,8 +63,13 @@ impl Ast {
 
     pub fn new_from_protocol(protocol: &bpir::representation::Protocol) -> Ast {
         let mut block = Ast::Sequence{blocks: std::vec::Vec::new()};
-        block.add_machine_header(protocol);
-        block.add_parsing_function(protocol);
+
+        for message in &protocol.messages {
+            // Add machine header
+            block.add_machine_header(message);
+            block.add_parsing_function(message);
+        }
+
 
         block
     }
