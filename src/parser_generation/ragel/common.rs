@@ -19,18 +19,65 @@ use log;
 pub enum Ast {
     // C-specific elements (TBD)
 
-    // Language-agnostic elements (TBD)
+    // Language-agnostic elements
+
+    /// Just treat it as a mere sequence
+    None,
 
     /// Generic sequence of AST nodes
-    Sequence{blocks: std::vec::Vec<Ast>},
+    Sequence{
+        blocks: std::vec::Vec<Ast>
+    },
 
     /// Ragel-specific machine header
-    MachineHeader{machine_name: std::string::String},
+    MachineHeader{
+        machine_name: std::string::String
+    },
 
     /// Entry point to the parser
     ParsingFunction {
         /// Name of the message which the parsing function is associated with
         message_name: std::string::String,
+    }
+}
+
+pub struct AstNode {
+    pub ast_node_type: Ast,
+    pub children: std::vec::Vec<AstNode>,
+}
+
+impl AstNode {
+    pub fn from_protocol(protocol: &bpir::representation::Protocol) -> AstNode {
+        let mut root = AstNode{
+            ast_node_type: Ast::None,
+            children: vec![]
+        };
+        for message in &protocol.messages {
+            root.add_message_parser(message);
+        }
+
+        root
+    }
+
+    /// Adds a new child to a node. Returns reference to the new child
+    fn add_child(&mut self, ast_node_type: Ast) -> &mut AstNode {
+        let child = AstNode {
+            ast_node_type,
+            children: vec![],
+        };
+        self.children.push(child);
+
+        self.children.last_mut().unwrap()
+    }
+
+    fn add_message_parser(&mut self, message: &bpir::representation::Message) {
+        self.add_child(Ast::MachineHeader{
+            machine_name: message.name.clone(),
+        });
+        let mut parsing_function = self.add_child(Ast::ParsingFunction{
+            message_name: message.name.clone()
+        });
+        parsing_function.add_child(Ast::None);
     }
 }
 
@@ -61,15 +108,18 @@ impl Ast {
         panic!();
     }
 
+    fn add_message(&mut self, message: &bpir::representation::Message) {
+            // Add machine header
+            self.add_machine_header(message);
+            self.add_parsing_function(message);
+    }
+
     pub fn new_from_protocol(protocol: &bpir::representation::Protocol) -> Ast {
         let mut block = Ast::Sequence{blocks: std::vec::Vec::new()};
 
         for message in &protocol.messages {
-            // Add machine header
-            block.add_machine_header(message);
-            block.add_parsing_function(message);
+            block.add_message(message);
         }
-
 
         block
     }

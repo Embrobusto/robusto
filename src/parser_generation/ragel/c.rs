@@ -1,9 +1,9 @@
 /// Generates C code from procedural representation
-
 use crate::bpir;
 use crate::parser_generation;
-use std;
 use log;
+use std;
+use std::io::Write;
 
 struct GenerationState {
     /// Current indentation level
@@ -15,7 +15,7 @@ struct GenerationState {
 
 impl GenerationState {
     fn new() -> GenerationState {
-        GenerationState{
+        GenerationState {
             indent_level: 0,
             indent_sequence: "\t",
             newline_sequence: "\n",
@@ -37,59 +37,49 @@ impl GenerationState {
 }
 
 /// C-specific Ragel AST
-pub struct Generator {
-    ast: parser_generation::ragel::common::Ast
+pub struct Generator<'a> {
+    ast: &'a parser_generation::ragel::common::AstNode,
 }
 
-impl Generator {
-    pub fn new_from_protocol(protocol: &bpir::representation::Protocol) -> Generator {
-        Generator{
-            ast: parser_generation::ragel::common::Ast::new_from_protocol(protocol),
+impl Generator<'_> {
+    pub fn from_ragel_ast(ast_node: &parser_generation::ragel::common::AstNode) -> Generator {
+        Generator {
+            ast: ast_node,
         }
     }
 
-    fn generate_impl<W: std::io::Write>(generation_state: &mut GenerationState,
-        ast: &parser_generation::ragel::common::Ast,
-        buf_writer: &mut std::io::BufWriter<W>
+    fn generate_traverse_ast_node<W: std::io::Write>(
+        &self,
+        ast: &parser_generation::ragel::common::AstNode,
+        buf_writer: &mut std::io::BufWriter<W>,
     ) {
-        use parser_generation::ragel::common;
-        use std::io::Write;
-
-        // Convert AST into the actual Ragel+C code
-        // TODO: split this into submethods
-        match ast {
-            common::Ast::Sequence{ref blocks} => {
-                for block in blocks {
-                    Generator::generate_impl(generation_state, block, buf_writer);
-                }
-            },
-            common::Ast::MachineHeader{machine_name} => {
-                buf_writer.write_fmt(format_args!(
-"%%{{
-    machine {machine_name};
-    write data;
-%%}}
-
-"
-                ));
-            },
-            common::Ast::ParsingFunction{ref message_name}=> {
-                buf_writer.write_fmt(format_args!(
-"void parse(char *string, char *length)
-{{
-}}"
-                ));
-            },
+        match ast.ast_node_type {
+            parser_generation::ragel::common::Ast::MachineHeader { ref machine_name } => {
+                self.generate_machine_name(buf_writer, machine_name)
+            }
             _ => {
-                log::warn!("Unhandled element");
+                log::error!("Unmatched node, panicking!");
+                panic!();
             }
         }
     }
+
+    fn generate_machine_name<W: std::io::Write>(
+        &self,
+        buf_writer: &mut std::io::BufWriter<W>,
+        machine_name: &std::string::String,
+    ) {
+        buf_writer.write_fmt(format_args!(
+            "%%{{
+    machine {machine_name};
+    write data;
+%%}}"
+        ));
+    }
 }
 
-impl parser_generation::Generate for Generator {
-    fn generate<W: std::io::Write>(&self, buf_writer: &mut std::io::BufWriter<W>) {
-        let mut generation_state = GenerationState::new();
-        Generator::generate_impl(&mut generation_state, &self.ast, buf_writer);
+impl parser_generation::Write for Generator<'_> {
+    fn write<W: std::io::Write>(&self, buf_writer: &mut std::io::BufWriter<W>) {
+        self.generate_traverse_ast_node(self.ast, buf_writer);
     }
 }
