@@ -70,6 +70,9 @@ pub enum MessageAttribute {
     Root,
 }
 
+pub enum ProtocolAttribute {
+}
+
 /// Represents a protocol's message as a sequence of bytes
 pub struct Message {
     pub name: std::string::String,
@@ -87,6 +90,7 @@ pub struct Field {
 /// Represents the entire protocol as a set of messages
 pub struct Protocol {
     pub messages: std::vec::Vec<Message>,
+    pub attributes: std::vec::Vec<ProtocolAttribute>,
 }
 
 impl Protocol {
