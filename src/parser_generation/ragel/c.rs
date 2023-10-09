@@ -50,20 +50,22 @@ impl Generator<'_> {
 
     fn generate_traverse_ast_node<W: std::io::Write>(
         &self,
-        ast: &parser_generation::ragel::common::AstNode,
+        ast_node: &parser_generation::ragel::common::AstNode,
         buf_writer: &mut std::io::BufWriter<W>,
     ) {
-        match ast.ast_node_type {
+        match ast_node.ast_node_type {
             parser_generation::ragel::common::Ast::MachineHeader { ref machine_name } => {
-                self.generate_machine_name(buf_writer, machine_name)
+                self.generate_machine_name(ast_node, buf_writer, machine_name)
             },
             parser_generation::ragel::common::Ast::None => {
-                for ast in &ast.children {
-                    self.generate_traverse_ast_node(ast, buf_writer);
+                for ast_node_child in &ast_node.children {
+                    self.generate_traverse_ast_node(ast_node_child, buf_writer);
                 }
-            }
+            },
+            parser_generation::ragel::common::Ast::ParsingFunction { ref message_name } => {
+            },
             _ => {
-                log::error!("Unmatched node \"{:?}\", panicking!", ast.ast_node_type);
+                log::error!("Unmatched node \"{:?}\", panicking!", ast_node.ast_node_type);
                 panic!();
             }
         }
@@ -71,14 +73,30 @@ impl Generator<'_> {
 
     fn generate_machine_name<W: std::io::Write>(
         &self,
+        ast_node: &parser_generation::ragel::common::AstNode,
         buf_writer: &mut std::io::BufWriter<W>,
         machine_name: &std::string::String,
     ) {
         buf_writer.write_fmt(format_args!(
-            "%%{{
+"%%{{
     machine {machine_name};
     write data;
 %%}}"
+        ));
+    }
+
+    fn generate_parsing_function<W: std::io::Write>(
+        &self,
+        ast_node: &parser_generation::ragel::common::AstNode,
+        buf_writer: &mut std::io::BufWriter<W>,
+        message_name: &std::string::String
+    ) {
+        buf_writer.write_fmt(format_args!(
+"
+void parse{message_name}(const char *aInputBuffer, int aInputBufferLength, struct {message_name} *a{message_name})
+{{
+}}
+"
         ));
     }
 }
