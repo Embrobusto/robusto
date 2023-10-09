@@ -2,14 +2,14 @@
 
 use crate::bpir;
 
-pub struct ValidationResult {
+pub struct Result {
 	errors: usize,
 	warnings: usize,
 }
 
-pub fn validate_protocol(protocol: &bpir::representation::Protocol) -> ValidationResult {
+pub fn validate_protocol(protocol: &bpir::representation::Protocol) -> Result {
 	// TODO
-	return ValidationResult{
+	return Result{
 		errors: 0usize,
 		warnings: 0usize,
 	}
