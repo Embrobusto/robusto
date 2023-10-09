@@ -56,6 +56,11 @@ impl Generator<'_> {
         match ast.ast_node_type {
             parser_generation::ragel::common::Ast::MachineHeader { ref machine_name } => {
                 self.generate_machine_name(buf_writer, machine_name)
+            },
+            parser_generation::ragel::common::Ast::None => {
+                for ast in &ast.children {
+                    self.generate_traverse_ast_node(ast, buf_writer);
+                }
             }
             _ => {
                 log::error!("Unmatched node, panicking!");
