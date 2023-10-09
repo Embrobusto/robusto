@@ -77,7 +77,6 @@ impl AstNode {
         let mut parsing_function = self.add_child(Ast::ParsingFunction{
             message_name: message.name.clone()
         });
-        parsing_function.add_child(Ast::None);
     }
 }
 
