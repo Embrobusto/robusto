@@ -63,7 +63,7 @@ impl Generator<'_> {
                 }
             }
             _ => {
-                log::error!("Unmatched node, panicking!");
+                log::error!("Unmatched node \"{:?}\", panicking!", ast.ast_node_type);
                 panic!();
             }
         }
