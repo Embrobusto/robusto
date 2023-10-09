@@ -7,6 +7,9 @@ edition = "2021"
 name = "basic_c_ragel_generation_from_bpir"
 path = "src/bin/test_examples/basic_c_ragel_generation_from_bpir.rs"
 
+[target.basic_c_ragel_generation_from_bpir.dependencies]
+env_logger = "*"
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
