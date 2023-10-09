@@ -63,6 +63,7 @@ impl Generator<'_> {
                 }
             },
             parser_generation::ragel::common::Ast::ParsingFunction { ref message_name } => {
+                self.generate_parsing_function(ast_node, buf_writer, message_name);
             },
             _ => {
                 log::error!("Unmatched node \"{:?}\", panicking!", ast_node.ast_node_type);
