@@ -39,7 +39,10 @@ fn main() {
     env_logger::init();
 
     // Create a simple BPIR
-    let protocol = robusto::bpir::representation::Protocol{messages: vec![make_message_bpir()]};
+    let protocol = robusto::bpir::representation::Protocol{
+        messages: vec![make_message_bpir()],
+        attributes: vec![],
+    };
 
     // Run Ragel code generation
     let file = std::fs::File::create(OUTPUT_FILE_NAME).unwrap();
