@@ -5,37 +5,6 @@ use log;
 use std;
 use std::io::Write;
 
-struct GenerationState {
-    /// Current indentation level
-    indent_level: usize,
-
-    indent_sequence: &'static str,
-    newline_sequence: &'static str,
-}
-
-impl GenerationState {
-    fn new() -> GenerationState {
-        GenerationState {
-            indent_level: 0,
-            indent_sequence: "\t",
-            newline_sequence: "\n",
-        }
-    }
-
-    fn write_indent<W: std::io::Write>(&self, buf_writer: &mut std::io::BufWriter<W>) {
-        use std::io::Write;
-
-        for i in 0..self.indent_level {
-            buf_writer.write(self.indent_sequence.as_bytes());
-        }
-    }
-
-    fn write_newline<W: std::io::Write>(&self, buf_writer: &mut std::io::BufWriter<W>) {
-        use std::io::Write;
-        buf_writer.write(self.newline_sequence.as_bytes());
-    }
-}
-
 /// C-specific Ragel AST
 pub struct Generator<'a> {
     ast: &'a parser_generation::ragel::common::AstNode,
