@@ -7,6 +7,7 @@ use std::str::FromStr;
 
 use robusto::{self, parser_generation::Write};
 use std;
+use env_logger;
 
 const OUTPUT_FILE_NAME: &'static str = "output.c.rl";
 
@@ -37,11 +38,16 @@ fn main() {
 	use robusto::parser_generation::Generate;
 	use std::io::Write;
 
+	// Initialize logging
+	env_logger::init();
+
+	// Create a simple BPIR
 	let protocol = robusto::bpir::representation::Protocol{messages: vec![make_message_bpir()]};
+
+	// Run Ragel code generation
 	let file = std::fs::File::create(OUTPUT_FILE_NAME).unwrap();
 	let mut buf_writer = std::io::BufWriter::new(file);
 	let ast = robusto::parser_generation::ragel::common::AstNode::from_protocol(&protocol);
 	let c_generator = robusto::parser_generation::ragel::c::Generator::from_ragel_ast(&ast);
 	c_generator.write(&mut buf_writer);
-	// c_ast.generate(&mut buf_writer);
 }
