@@ -35,9 +35,6 @@ fn make_message_bpir() -> robusto::bpir::representation::Message {
 }
 
 fn main() {
-    use robusto::parser_generation::Generate;
-    use std::io::Write;
-
     // Initialize logging
     env_logger::init();
 
