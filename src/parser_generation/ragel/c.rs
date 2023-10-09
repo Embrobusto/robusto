@@ -51,7 +51,8 @@ impl Generator<'_> {
 "%%{{
     machine {machine_name};
     write data;
-%%}}"
+%%}}
+"
         ));
     }
 
@@ -65,6 +66,9 @@ impl Generator<'_> {
 "
 void parse{message_name}(const char *aInputBuffer, int aInputBufferLength, struct {message_name} *a{message_name})
 {{
+    const char *p = aInputBuffer;  // Iterator \"begin\" pointer -- Ragel-specific variable for C code generation
+    const char *pe = aInputBuffer + aInputBufferLength;  // Iterator \"end\" pointer -- Ragel-specific variable for C code generation
+    int cs;  // Current state -- Ragel-specific variable for C code generation
 }}
 "
         ));
