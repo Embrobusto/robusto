@@ -22,9 +22,6 @@ pub enum Ast {
     /// Just treat it as a mere sequence
     None,
 
-    /// Generic sequence of AST nodes
-    Sequence { blocks: std::vec::Vec<Ast> },
-
     /// Ragel-specific machine header
     MachineHeader { machine_name: std::string::String },
 
