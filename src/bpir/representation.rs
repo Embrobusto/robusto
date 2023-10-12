@@ -57,6 +57,7 @@ use log;
 /// - accepted values;
 /// - hooks (for calculating checksums),
 /// etc.
+#[derive(Debug)]
 pub enum FieldAttribute {
     /// Expected length
     Length(usize),
