@@ -29,7 +29,7 @@ pub struct Generator<'a> {
 fn write_line_with_indent_or_panic<W: std::io::Write>(
     buf_writer: &mut std::io::BufWriter<W>,
     indent: usize,
-    line: std::string::String,
+    line: &[u8]
 ) {
     for i in 0..indent {
         if let Err(_) = buf_writer.write("    ".as_bytes()) {
@@ -38,7 +38,7 @@ fn write_line_with_indent_or_panic<W: std::io::Write>(
         }
     }
 
-    if let Err(_) = buf_writer.write(line.as_bytes()) {
+    if let Err(_) = buf_writer.write(line) {
         log::error!("Failed to write into file, panicking!");
         panic!();
     }
@@ -117,28 +117,28 @@ impl Generator<'_> {
         write_line_with_indent_or_panic(
             buf_writer,
             generation_state.indent,
-            format!("void parse{message_name}(const char *aInputBuffer, int aInputBufferLength, struct {message_name} *a{message_name})")
+            format!("void parse{message_name}(const char *aInputBuffer, int aInputBufferLength, struct {message_name} *a{message_name})").as_bytes()
         );
         write_line_with_indent_or_panic(
             buf_writer,
             generation_state.indent,
-            std::string::String::from_str("{").unwrap(),
+            "{".as_bytes()
         );
         generation_state.indent += 1;
         write_line_with_indent_or_panic(
             buf_writer,
             generation_state.indent,
-            format!( "const char *p = aInputBuffer;  // Iterator \"begin\" pointer -- Ragel-specific variable for C code generation"),
+            format!( "const char *p = aInputBuffer;  // Iterator \"begin\" pointer -- Ragel-specific variable for C code generation").as_bytes(),
         );
         write_line_with_indent_or_panic(
             buf_writer,
             generation_state.indent,
-            format!("const char *pe = aInputBuffer + aInputBufferLength;  // Iterator \"end\" pointer -- Ragel-specific variable for C code generation"),
+            format!("const char *pe = aInputBuffer + aInputBufferLength;  // Iterator \"end\" pointer -- Ragel-specific variable for C code generation").as_bytes(),
         );
         write_line_with_indent_or_panic(
             buf_writer,
             generation_state.indent,
-            format!( "int cs;  // Current state -- Ragel-specific variable for C code generation"),
+            format!( "int cs;  // Current state -- Ragel-specific variable for C code generation").as_bytes(),
         );
     }
 }
