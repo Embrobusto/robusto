@@ -6,6 +6,7 @@ use std;
 use std::fmt::write;
 use std::io::Write;
 use std::str::FromStr;
+use crate::utility;
 
 const NEWLINE: &'static str = "\n";
 
@@ -23,30 +24,6 @@ impl GenerationState {
 /// C-specific Ragel AST
 pub struct Generator<'a> {
     ast: &'a parser_generation::ragel::common::AstNode,
-}
-
-/// Boilerplate reducer
-fn write_line_with_indent_or_panic<W: std::io::Write>(
-    buf_writer: &mut std::io::BufWriter<W>,
-    indent: usize,
-    line: &[u8]
-) {
-    for i in 0..indent {
-        if let Err(_) = buf_writer.write("    ".as_bytes()) {
-            log::error!("Failed to write into file, panicking!");
-            panic!();
-        }
-    }
-
-    if let Err(_) = buf_writer.write(line) {
-        log::error!("Failed to write into file, panicking!");
-        panic!();
-    }
-
-    if let Err(_) = buf_writer.write(NEWLINE.as_bytes()) {
-        log::error!("Failed to write into file, panicking!");
-        panic!();
-    }
 }
 
 impl Generator<'_> {
@@ -114,28 +91,28 @@ impl Generator<'_> {
         message_name: &std::string::String,
         generation_state: &mut GenerationState,
     ) {
-        write_line_with_indent_or_panic(
+        utility::string::write_line_with_indent_or_panic(
             buf_writer,
             generation_state.indent,
             format!("void parse{message_name}(const char *aInputBuffer, int aInputBufferLength, struct {message_name} *a{message_name})").as_bytes()
         );
-        write_line_with_indent_or_panic(
+        utility::string::write_line_with_indent_or_panic(
             buf_writer,
             generation_state.indent,
             "{".as_bytes()
         );
         generation_state.indent += 1;
-        write_line_with_indent_or_panic(
+        utility::string::write_line_with_indent_or_panic(
             buf_writer,
             generation_state.indent,
             format!( "const char *p = aInputBuffer;  // Iterator \"begin\" pointer -- Ragel-specific variable for C code generation").as_bytes(),
         );
-        write_line_with_indent_or_panic(
+        utility::string::write_line_with_indent_or_panic(
             buf_writer,
             generation_state.indent,
             format!("const char *pe = aInputBuffer + aInputBufferLength;  // Iterator \"end\" pointer -- Ragel-specific variable for C code generation").as_bytes(),
         );
-        write_line_with_indent_or_panic(
+        utility::string::write_line_with_indent_or_panic(
             buf_writer,
             generation_state.indent,
             format!( "int cs;  // Current state -- Ragel-specific variable for C code generation").as_bytes(),
