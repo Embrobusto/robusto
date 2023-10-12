@@ -30,6 +30,11 @@ pub enum Ast {
         /// Name of the message which the parsing function is associated with
         message_name: std::string::String,
     },
+
+    RawStringSequence {
+        /// The sequence
+        string_sequence: std::string::String,
+    },
 }
 
 pub struct AstNode {
@@ -68,5 +73,28 @@ impl AstNode {
         let mut parsing_function = self.add_child(Ast::ParsingFunction {
             message_name: message.name.clone(),
         });
+
+        for field in &message.fields {
+            parsing_function.add_field_parser(field);
+        }
+    }
+
+    fn add_field_parser(&mut self, field: &bpir::representation::Field) {
+        use std::fmt;
+
+        match field.field_type {
+            bpir::representation::FieldType::Regex(_) => {
+                self.add_regex_field_parser(field);
+            }
+        }
+        // Get field type
+    }
+
+    fn add_regex_field_parser(&mut self, field: &bpir::representation::Field) {
+        if let bpir::representation::FieldType::Regex(ref regex) = field.field_type {
+            self.add_child(Ast::RawStringSequence {
+                string_sequence: format!("%%{{ {} := {} %%}}", field.name, regex),
+            });
+        }
     }
 }
