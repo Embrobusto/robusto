@@ -12,23 +12,15 @@ use env_logger;
 const OUTPUT_FILE_NAME: &'static str = "output.c.rl";
 
 fn make_message_bpir() -> robusto::bpir::representation::Message {
-    let mut message = robusto::bpir::representation::Message{
+    let mut message = robusto::bpir::representation::Message {
         name: std::string::String::from("TestMessage"),
         fields: std::vec::Vec::<robusto::bpir::representation::Field>::new(),
         attributes: std::vec::Vec::<robusto::bpir::representation::MessageAttribute>::new(),
     };
 
-    message.fields.push(robusto::bpir::representation::Field{
+    message.fields.push(robusto::bpir::representation::Field {
         name: std::string::String::from("preamble"),
-        attributes: vec![
-            robusto::bpir::representation::FieldAttribute::ConstSequence(vec![0xfe]),
-        ]
-    });
-    message.fields.push(robusto::bpir::representation::Field{
-        name: std::string::String::from("payload"),
-        attributes: vec![
-            robusto::bpir::representation::FieldAttribute::Length(3),
-        ]
+        field_type: robusto::bpir::representation::FieldType::Regex("\\xfe".to_string()),
     });
 
     message
