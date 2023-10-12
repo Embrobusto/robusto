@@ -3,6 +3,7 @@ use crate::bpir;
 use crate::parser_generation;
 use log;
 use std;
+use std::fmt::write;
 use std::io::Write;
 
 /// C-specific Ragel AST
@@ -47,13 +48,18 @@ impl Generator<'_> {
         buf_writer: &mut std::io::BufWriter<W>,
         machine_name: &std::string::String,
     ) {
-        buf_writer.write_fmt(format_args!(
+        let write_result = buf_writer.write_fmt(format_args!(
 "%%{{
     machine {machine_name};
     write data;
 %%}}
 "
         ));
+
+        if let Err(_) = write_result {
+            log::error!("Could not write into file, panicking!");
+            panic!();
+        }
     }
 
     fn generate_parsing_function<W: std::io::Write>(
@@ -62,7 +68,7 @@ impl Generator<'_> {
         buf_writer: &mut std::io::BufWriter<W>,
         message_name: &std::string::String
     ) {
-        buf_writer.write_fmt(format_args!(
+        let write_result = buf_writer.write_fmt(format_args!(
 "
 void parse{message_name}(const char *aInputBuffer, int aInputBufferLength, struct {message_name} *a{message_name})
 {{
@@ -72,6 +78,11 @@ void parse{message_name}(const char *aInputBuffer, int aInputBufferLength, struc
 }}
 "
         ));
+
+        if let Err(_) = write_result {
+            log::error!("Could not write into file, panicking!");
+            panic!();
+        }
     }
 }
 
