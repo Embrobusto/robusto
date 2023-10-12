@@ -94,8 +94,7 @@ impl Generator<'_> {
         machine_name: &std::string::String,
         generation_state: &mut GenerationState,
     ) {
-        let write_result = buf_writer.write_fmt(format_args!(
-            "%%{{
+        let write_result = buf_writer.write_fmt(format_args!("%%{{
     machine {machine_name};
     write data;
 %%}}
@@ -125,6 +124,7 @@ impl Generator<'_> {
             generation_state.indent,
             std::string::String::from_str("{").unwrap(),
         );
+        generation_state.indent += 1;
         write_line_with_indent_or_panic(
             buf_writer,
             generation_state.indent,
