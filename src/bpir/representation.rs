@@ -59,11 +59,16 @@ use log;
 /// etc.
 #[derive(Debug)]
 pub enum FieldAttribute {
-    /// Expected length
+    /// Expected exact length
     Length(usize),
 
     /// Expect a certain sequence of bytes
     ConstSequence(std::vec::Vec<u8>),
+}
+
+pub enum FieldType {
+    /// Expect a certain sequence of bytes
+    Regex(std::string::String),
 }
 
 pub enum MessageAttribute {
@@ -85,7 +90,7 @@ pub struct Message {
 /// payload (nested message))
 pub struct Field {
     pub name: std::string::String,
-    pub attributes: std::vec::Vec<FieldAttribute>,
+    pub field_type: FieldType,
 }
 
 /// Represents the entire protocol as a set of messages
