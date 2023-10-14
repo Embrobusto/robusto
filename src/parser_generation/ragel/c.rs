@@ -71,17 +71,13 @@ impl Generator<'_> {
         machine_name: &std::string::String,
         generation_state: &mut GenerationState,
     ) {
-        let write_result = buf_writer.write_fmt(format_args!("%%{{
+        utility::string::write_with_indent_or_panic(buf_writer, generation_state.indent, format!(
+"%%{{
     machine {machine_name};
     write data;
 %%}}
 "
-        ));
-
-        if let Err(_) = write_result {
-            log::error!("Could not write into file, panicking!");
-            panic!();
-        }
+        ).as_bytes());
     }
 
     fn generate_parsing_function<W: std::io::Write>(
