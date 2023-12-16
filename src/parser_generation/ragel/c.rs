@@ -1,5 +1,6 @@
 /// Generates C code from procedural representation
 use crate::bpir;
+use crate::bpir::representation::RegexFieldType;
 use crate::parser_generation;
 use log;
 use std;
@@ -114,7 +115,25 @@ impl Generator<'_> {
             generation_state.indent,
             format!( "int cs;  // Current state -- Ragel-specific variable for C code generation").as_bytes(),
         );
+
+        // Iterate through children
+        for child_node in &ast_node.children {
+            match child_node.ast_node_type {
+                parser_generation::ragel::common::Ast::RawStringSequence(ref node) => {self.generate_raw_string_sequence_parser(child_node, buf_writer, node, generation_state); },
+                _ => {}  // TODO: MUST NOT get here
+            }
+        }
     }
+
+    fn generate_raw_string_sequence_parser<W: std::io::Write>(
+        &self,
+        ast_node: &parser_generation::ragel::common::AstNode,
+        buf_writer: &mut std::io::BufWriter<W>,
+        node: &parser_generation::ragel::common::RawStringSequenceAstNode,
+        generation_state: &mut GenerationState,
+    ) {
+    }
+
 }
 
 impl parser_generation::Write for Generator<'_> {
