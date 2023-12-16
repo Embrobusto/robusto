@@ -50,7 +50,7 @@ impl Generator<'_> {
                 self.generate_parsing_function(
                     ast_node,
                     buf_writer,
-                    &node.message_name,
+                    &node,
                     generation_state,
                 );
             }
@@ -84,13 +84,14 @@ impl Generator<'_> {
         &self,
         ast_node: &parser_generation::ragel::common::AstNode,
         buf_writer: &mut std::io::BufWriter<W>,
-        message_name: &std::string::String,
+        node: &parser_generation::ragel::common::ParsingFunctionAstNode,
         generation_state: &mut GenerationState,
     ) {
+        // Generate ragel parsing function state
         utility::string::write_line_with_indent_or_panic(
             buf_writer,
             generation_state.indent,
-            format!("void parse{message_name}(const char *aInputBuffer, int aInputBufferLength, struct {message_name} *a{message_name})").as_bytes()
+            format!("void parse{0}(const char *aInputBuffer, int aInputBufferLength, struct {1} *a{2})", node.message_name, node.message_name, node.message_name,).as_bytes()
         );
         utility::string::write_line_with_indent_or_panic(
             buf_writer,
