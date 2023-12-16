@@ -66,16 +66,24 @@ pub enum FieldAttribute {
     ConstSequence(std::vec::Vec<u8>),
 }
 
-pub enum FieldType {
-    /// Expect a certain sequence of bytes
-    Regex(std::string::String),
+#[derive(Debug)]
+pub struct RegexFieldType {
+    pub regex: std::string::String,
 }
 
+#[derive(Debug)]
+pub enum FieldType {
+    /// Expect a certain sequence of bytes
+    Regex(RegexFieldType),
+}
+
+#[derive(Debug)]
 pub enum MessageAttribute {
     /// This message is the core of the protocol, which nests every other one
     Root,
 }
 
+#[derive(Debug)]
 pub enum ProtocolAttribute {
 }
 

@@ -14,6 +14,23 @@ pub use std;
 /// Represents an abstract syntactic tree for Ragel code, with the difference
 /// that its leaves mostly consist of snippets rather than atomic language
 /// constructs, i.e. it is a less detailed representation of Ragel code.
+///
+#[derive(Debug)]
+pub struct ParsingFunctionAstNode {
+    /// Each parsing function is supposed to be associated w/ a particular message
+    pub message_name: std::string::String,
+}
+
+#[derive(Debug)]
+pub struct RawStringSequenceAstNode {
+    pub string_sequence: std::string::String,
+}
+
+#[derive(Debug)]
+pub struct MachineHeaderAstNode {
+    pub machine_name: std::string::String,
+}
+
 #[derive(Debug)]
 pub enum Ast {
     // C-specific elements (TBD)
@@ -23,18 +40,9 @@ pub enum Ast {
     None,
 
     /// Ragel-specific machine header
-    MachineHeader { machine_name: std::string::String },
-
-    /// Entry point to the parser
-    ParsingFunction {
-        /// Name of the message which the parsing function is associated with
-        message_name: std::string::String,
-    },
-
-    RawStringSequence {
-        /// The sequence
-        string_sequence: std::string::String,
-    },
+    MachineHeader(MachineHeaderAstNode),
+    ParsingFunction(ParsingFunctionAstNode),
+    RawStringSequence(RawStringSequenceAstNode),
 }
 
 pub struct AstNode {
@@ -67,12 +75,11 @@ impl AstNode {
     }
 
     fn add_message_parser(&mut self, message: &bpir::representation::Message) {
-        self.add_child(Ast::MachineHeader {
+        self.add_child(Ast::MachineHeader(MachineHeaderAstNode{
             machine_name: message.name.clone(),
-        });
-        let mut parsing_function = self.add_child(Ast::ParsingFunction {
-            message_name: message.name.clone(),
-        });
+        }));
+            let mut parsing_function = self.add_child(Ast::ParsingFunction(ParsingFunctionAstNode{message_name: message.name.clone()}
+        ));
 
         for field in &message.fields {
             parsing_function.add_field_parser(field);
@@ -92,9 +99,9 @@ impl AstNode {
 
     fn add_regex_field_parser(&mut self, field: &bpir::representation::Field) {
         if let bpir::representation::FieldType::Regex(ref regex) = field.field_type {
-            self.add_child(Ast::RawStringSequence {
-                string_sequence: format!("%%{{ {} := {} %%}}", field.name, regex),
-            });
+            self.add_child(Ast::RawStringSequence(RawStringSequenceAstNode {
+                string_sequence: format!("%%{{ {} := {} %%}}", field.name, regex.regex),
+            }));
         }
     }
 }

@@ -20,7 +20,7 @@ fn make_message_bpir() -> robusto::bpir::representation::Message {
 
     message.fields.push(robusto::bpir::representation::Field {
         name: std::string::String::from("preamble"),
-        field_type: robusto::bpir::representation::FieldType::Regex("\\xfe".to_string()),
+        field_type: robusto::bpir::representation::FieldType::Regex(robusto::bpir::representation::RegexFieldType{regex: "\\xfe".to_string()}),
     });
 
     message

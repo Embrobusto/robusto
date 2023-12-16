@@ -38,19 +38,19 @@ impl Generator<'_> {
         generation_state: &mut GenerationState,
     ) {
         match ast_node.ast_node_type {
-            parser_generation::ragel::common::Ast::MachineHeader { ref machine_name } => {
-                self.generate_machine_name(ast_node, buf_writer, machine_name, generation_state)
+            parser_generation::ragel::common::Ast::MachineHeader(ref node) => {
+                self.generate_machine_name(ast_node, buf_writer, &node.machine_name, generation_state)
             }
             parser_generation::ragel::common::Ast::None => {
                 for ast_node_child in &ast_node.children {
                     self.generate_traverse_ast_node(ast_node_child, buf_writer, generation_state);
                 }
             }
-            parser_generation::ragel::common::Ast::ParsingFunction { ref message_name } => {
+            parser_generation::ragel::common::Ast::ParsingFunction(ref node) => {
                 self.generate_parsing_function(
                     ast_node,
                     buf_writer,
-                    message_name,
+                    &node.message_name,
                     generation_state,
                 );
             }
