@@ -46,9 +46,6 @@ impl Generator<'_> {
                     &node.machine_name,
                     generation_state,
                 ),
-            parser_generation::ragel::common::Ast::ParserState(ref node) => {
-                self.generate_parser_state(ast_node, buf_writer, &node, generation_state)
-            }
             parser_generation::ragel::common::Ast::None => {
                 for ast_node_child in &ast_node.children {
                     self.generate_traverse_ast_node(ast_node_child, buf_writer, generation_state);
@@ -78,40 +75,24 @@ impl Generator<'_> {
             buf_writer,
             generation_state.indent,
             format!(
-                "%%{{
+"%%{{
     machine {machine_name};
     write data;
 %%}}
-"
-            )
-            .as_bytes(),
-        );
-    }
 
-    fn generate_parser_state<W: std::io::Write>(
-        &self,
-        ast_node: &parser_generation::ragel::common::AstNode,
-        buf_writer: &mut std::io::BufWriter<W>,
-        node: &parser_generation::ragel::common::ParserStateAstNode,
-        generation_state: &mut GenerationState,
-    ) {
-        utility::string::write_with_indent_or_panic(
-            buf_writer,
-            generation_state.indent,
-            format!(
-"
-struct {0}ParserState {{
-    int isInitialized;
-    int isError;
+struct {machine_name}ParserState {{
+    int machineInitRequired;
+    int cs;  // Ragel-specific state variable
 }};
 
-static struct {0}ParserState s{0}ParserState {{
-    .isInitialized = 0,
-    .isError = 0,
-}};
-
-",
-            node.name).as_bytes(),
+void machine{machine_name}ParserStateInit(struct {machine_name}ParserState *aParserState)
+{{
+    aParserState->machineInitRequired = 0;
+    aParserState->cs = 0;
+    %% write init;
+}}
+"
+            ).as_bytes(),
         );
     }
 
@@ -127,8 +108,8 @@ static struct {0}ParserState s{0}ParserState {{
             buf_writer,
             generation_state.indent,
             format!(
-                "void parse{0}(const char *aInputBuffer, int aInputBufferLength, struct {1} *a{2})",
-                node.message_name, node.message_name, node.message_name,
+                "void parse{0}(struct {3}ParserState *aParserState, const char *aInputBuffer, int aInputBufferLength, struct {1} *a{2})",
+                node.message_name, node.message_name, node.message_name, node.message_name
             )
             .as_bytes(),
         );
@@ -154,6 +135,10 @@ static struct {0}ParserState s{0}ParserState {{
             format!("int cs;  // Current state -- Ragel-specific variable for C code generation")
                 .as_bytes(),
         );
+        utility::string::write_line_with_indent_or_panic(buf_writer, generation_state.indent,
+            format!("%% write exec;").as_bytes());
+        generation_state.indent -= 1;
+        utility::string::write_line_with_indent_or_panic(buf_writer, generation_state.indent, "}".as_bytes());
 
         // Iterate through children
         for child_node in &ast_node.children {

@@ -32,11 +32,6 @@ pub struct MachineHeaderAstNode {
 }
 
 #[derive(Debug)]
-pub struct ParserStateAstNode {
-    pub name: std::string::String,
-}
-
-#[derive(Debug)]
 pub enum Ast {
     // C-specific elements (TBD)
 
@@ -46,7 +41,6 @@ pub enum Ast {
 
     /// Ragel-specific machine header
     MachineHeader(MachineHeaderAstNode),
-    ParserState(ParserStateAstNode),
     ParsingFunction(ParsingFunctionAstNode),
     RawStringSequence(RawStringSequenceAstNode),
 }
@@ -83,9 +77,6 @@ impl AstNode {
     fn add_message_parser(&mut self, message: &bpir::representation::Message) {
         self.add_child(Ast::MachineHeader(MachineHeaderAstNode{
             machine_name: message.name.clone(),
-        }));
-        self.add_child(Ast::ParserState(ParserStateAstNode {
-            name: message.name.clone(),
         }));
         let mut parsing_function = self.add_child(
             Ast::ParsingFunction(ParsingFunctionAstNode{message_name: message.name.clone()}
