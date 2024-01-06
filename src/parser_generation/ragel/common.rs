@@ -90,9 +90,7 @@ impl AstNode {
         use std::fmt;
 
         match field.field_type {
-            bpir::representation::FieldType::Regex(_) => {
-                self.add_regex_field_parser(field);
-            }
+            bpir::representation::FieldType::Regex(_) => self.add_regex_field_parser(field),
         }
         // Get field type
     }
