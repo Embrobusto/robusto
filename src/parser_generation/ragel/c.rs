@@ -39,13 +39,13 @@ impl Generator<'_> {
         generation_state: &mut GenerationState,
     ) {
         match ast_node.ast_node_type {
-            parser_generation::ragel::common::Ast::MachineHeader(ref node) => self
-                .generate_machine_header(
+            parser_generation::ragel::common::Ast::MachineHeader(ref node) => self.generate_machine_header(
                     ast_node,
                     buf_writer,
                     &node.machine_name,
                     generation_state,
                 ),
+            parser_generation::ragel::common::Ast::MachineDefinition(ref node) => self.generate_machine_definition(ast_node, buf_writer, &node, generation_state),
             parser_generation::ragel::common::Ast::None => {
                 for ast_node_child in &ast_node.children {
                     self.generate_traverse_ast_node(ast_node_child, buf_writer, generation_state);
@@ -96,6 +96,32 @@ void machine{machine_name}ParserStateInit(struct {machine_name}ParserState *aPar
         );
     }
 
+    fn generate_machine_definition<W: std::io::Write>(
+        &self,
+        ast_node: &parser_generation::ragel::common::AstNode,
+        buf_writer: &mut std::io::BufWriter<W>,
+        node: &parser_generation::ragel::common::MachineDefinitionAstNode,
+        generation_state: &mut GenerationState,
+    ) {
+        utility::string::write_with_indent_or_panic(
+            buf_writer,
+            generation_state.indent,
+            format!(
+"%%{{
+    machine {0};
+    access aParserState->;
+",
+            node.machine_name).as_bytes(),
+        );
+        generation_state.indent += 1;
+
+        // TODO: iterate through fields
+
+        generation_state.indent -= 1;
+        utility::string::write_line_with_indent_or_panic( buf_writer, generation_state.indent, "%%}".as_bytes());
+        utility::string::write_line_with_indent_or_panic( buf_writer, generation_state.indent, "".as_bytes());
+    }
+
     fn generate_parsing_function<W: std::io::Write>(
         &self,
         ast_node: &parser_generation::ragel::common::AstNode,
@@ -135,6 +161,7 @@ void machine{machine_name}ParserStateInit(struct {machine_name}ParserState *aPar
             format!("int cs;  // Current state -- Ragel-specific variable for C code generation")
                 .as_bytes(),
         );
+        utility::string::write_line_with_indent_or_panic(buf_writer, generation_state.indent, "// Parse starting from the state defined in `aParserState`".as_bytes());
         utility::string::write_line_with_indent_or_panic(buf_writer, generation_state.indent,
             format!("%% write exec;").as_bytes());
         generation_state.indent -= 1;

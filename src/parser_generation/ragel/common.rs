@@ -32,6 +32,11 @@ pub struct MachineHeaderAstNode {
 }
 
 #[derive(Debug)]
+pub struct MachineDefinitionAstNode {
+    pub machine_name: std::string::String,
+}
+
+#[derive(Debug)]
 pub enum Ast {
     // C-specific elements (TBD)
 
@@ -41,6 +46,7 @@ pub enum Ast {
 
     /// Ragel-specific machine header
     MachineHeader(MachineHeaderAstNode),
+    MachineDefinition(MachineDefinitionAstNode),
     ParsingFunction(ParsingFunctionAstNode),
     RawStringSequence(RawStringSequenceAstNode),
 }
@@ -75,12 +81,15 @@ impl AstNode {
     }
 
     fn add_message_parser(&mut self, message: &bpir::representation::Message) {
-        self.add_child(Ast::MachineHeader(MachineHeaderAstNode{
+        self.add_child(Ast::MachineHeader(MachineHeaderAstNode {
             machine_name: message.name.clone(),
         }));
-        let mut parsing_function = self.add_child(
-            Ast::ParsingFunction(ParsingFunctionAstNode{message_name: message.name.clone()}
-        ));
+        self.add_child(Ast::MachineDefinition(MachineDefinitionAstNode {
+            machine_name: message.name.clone(),
+        }));
+        let mut parsing_function = self.add_child(Ast::ParsingFunction(ParsingFunctionAstNode {
+            message_name: message.name.clone(),
+        }));
 
         for field in &message.fields {
             parsing_function.add_field_parser(field);
