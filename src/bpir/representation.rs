@@ -1,53 +1,54 @@
-/// Core intermerdiate representation. Serves the purpose of providing a
-/// convenient representation enabling:
-///
-/// - parser generation;
-/// - serializer generation with human-readable entities;
-///
-/// The idea is to make a stupid, straightforward solution with 1-to-1 mapping
-/// from user entities to parser/serializer backend, and vice versa.
-///
-/// Example:
-///
-/// Consider the message of the following structure:
-///
-///
-/// struct SimpleUserMessage {
-///	    sync: u8 = 0xFE,
-///     payload: u8[4],
-///     checksum_crc32: u32,
-/// }
-///
-///
-/// Here's what its representation would look like:
-///
-/// ```rust
-/// // `SimpleUserMessage` message
-/// use robusto::bpir::representation::Message;
-/// use robusto::bpir::representation::Field;
-/// use robusto::bpir::representation::FieldAttribute;
-/// let bpir = Message {
-///     name: std::string::String::from("SimpleUserMessage"),
-///     fields: vec![
-///         // `sync`
-///         Field {
-///             name: std::string::String::from("sync"),
-///             attributes: vec![
-///                 FieldAttribute::ConstSequence(vec![0xfe as u8]),
-///             ]
-///         },
-///         // `payload`
-///         Field {
-///             name: std::string::String::from("payload"),
-///             attributes: vec![
-///                 FieldAttribute::Length(4usize),
-///             ]
-///         },
-///     ],
-///     attributes: vec![]
-/// };
-/// ```
-///
+//! Core intermerdiate representation. Serves the purpose of providing a
+//! convenient representation enabling:
+//!
+//! - parser generation;
+//! - serializer generation with human-readable entities;
+//!
+//! The idea is to make a stupid, straightforward solution with 1-to-1 mapping
+//! from user entities to parser/serializer backend, and vice versa.
+//!
+//! Example:
+//!
+//! Consider the message of the following structure:
+//!
+//! ```
+//! struct SimpleUserMessage {
+//!	    sync: u8 = 0xFE,
+//!     payload: u8[4],
+//!     checksum_crc32: u32,
+//! }
+//! ```
+//!
+//!
+//! Here's what its representation would look like:
+//!
+//! ```rust
+//! // `SimpleUserMessage` message
+//! use robusto::bpir::representation::Message;
+//! use robusto::bpir::representation::Field;
+//! use robusto::bpir::representation::FieldAttribute;
+//! let bpir = Message {
+//!     name: std::string::String::from("SimpleUserMessage"),
+//!     fields: vec![
+//!         // `sync`
+//!         Field {
+//!             name: std::string::String::from("sync"),
+//!             attributes: vec![
+//!                 FieldAttribute::ConstSequence(vec![0xfe as u8]),
+//!             ]
+//!         },
+//!         // `payload`
+//!         Field {
+//!             name: std::string::String::from("payload"),
+//!             attributes: vec![
+//!                 FieldAttribute::Length(4usize),
+//!             ]
+//!         },
+//!     ],
+//!     attributes: vec![]
+//! };
+//! ```
+//!
 
 pub use std;
 use log;
