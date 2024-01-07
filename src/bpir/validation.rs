@@ -4,9 +4,17 @@ use std::boxed;
 use std::string;
 use std::vec;
 
-enum MessageFieldLintResult {
+use super::representation::Protocol;
+
+#[derive(Clone)]
+pub enum MessageFieldLintResult {
     Ok,
     Warning(string::String),
+}
+
+#[derive(Clone, Default)]
+pub struct ProtocolLintResult {
+    message_lint_results: vec::Vec<MessageFieldLintResult>,
 }
 
 /// A linter implementing `MessageFieldLint` checks the correctness of a
@@ -94,22 +102,35 @@ impl CompositeMessageLinter {
         instance
     }
 
-    pub fn lint_message(&mut self, message: &representation::Message) {
+    pub fn lint_message(
+        &mut self,
+        message: &representation::Message,
+        protocol_lint_result: &mut ProtocolLintResult,
+    ) {
         for field in &message.fields {
-            self.lint_field(message, field);
+            (self.lint_field(message, field, protocol_lint_result));
         }
     }
 
-    fn lint_field(&mut self, message: &representation::Message, field: &representation::Field) {
+    fn lint_field(
+        &mut self,
+        message: &representation::Message,
+        field: &representation::Field,
+        protocol_lint_result: &mut ProtocolLintResult,
+    ) {
         for linter in &mut self.pending_linters {
-            linter.lint_field(message, field); // TODO: save result
+            protocol_lint_result.message_lint_results.push(linter.lint_field(message, field)); // TODO: save result
         }
     }
 }
 
-pub fn validate_protocol(protocol: &representation::Protocol) {
+pub fn validate_protocol(protocol: &representation::Protocol) -> ProtocolLintResult {
+    let mut linter = CompositeMessageLinter::new();
+    let mut protocol_lint_result = ProtocolLintResult::default();
+
     for message in &protocol.messages {
-        let mut linter = CompositeMessageLinter::new();
-        linter.lint_message(message);
+        linter.lint_message(message, &mut protocol_lint_result);
     }
+
+    protocol_lint_result
 }
