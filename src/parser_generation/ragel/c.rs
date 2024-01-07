@@ -1,5 +1,6 @@
 /// Generates C code from procedural representation
 use crate::bpir;
+use crate::bpir::representation;
 use crate::bpir::representation::RegexFieldType;
 use crate::parser_generation;
 use crate::utility;
@@ -53,7 +54,10 @@ impl Generator<'_> {
             }
             parser_generation::ragel::common::Ast::ParsingFunction(ref node) => {
                 self.generate_parsing_function(ast_node, buf_writer, &node, generation_state);
-            }
+            },
+            parser_generation::ragel::common::Ast::MessageStruct(ref node) => {
+                self.generate_message_struct(ast_node, buf_writer, &node, generation_state);
+            },
             _ => {
                 log::error!(
                     "Unmatched node \"{:?}\", panicking!",
@@ -171,6 +175,20 @@ int cs;  // Current state -- Ragel-specific variable for C code generation
                 _ => {} // TODO: MUST NOT get here
             }
         }
+    }
+
+    fn generate_message_struct<W: std::io::Write>(
+        &self,
+        ast_node: &parser_generation::ragel::common::AstNode,
+        buf_writer: &mut std::io::BufWriter<W>,
+        node: &parser_generation::ragel::common::MessageStructAstNode,
+        generation_state: &mut GenerationState,
+    ) {
+        utility::string::write_with_indent_or_panic(buf_writer, generation_state.indent, format!("struct {0}Message {{", node.message_name).as_bytes());
+        generation_state.indent += 1;
+
+        generation_state.indent -= 1;
+        utility::string::write_line_with_indent_or_panic(buf_writer, generation_state.indent, "};".as_bytes());
     }
 
     fn generate_raw_string_sequence_parser<W: std::io::Write>(
