@@ -103,7 +103,6 @@ impl AstNode {
             children: vec![],
         };
         self.children.push(child);
-
         self.children.last_mut().unwrap()
     }
 
