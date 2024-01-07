@@ -12,6 +12,13 @@
 //! binary protocol implementation, to cut-off the risks and time expenses
 //! entailed by hand-writing binary protocol-parsing / marshalling boilerplate
 //! code.
+//!
+//! Projects similar to Robusto:
+//! - https://docs.zeek.org/projects/spicy/en/latest/index.html
+//! - https://www.protlr.com/
+//! - https://github.com/commschamp/comms_champion
+//! - https://github.com/google/wuffs
+//! - https://doc.kaitai.io/faq.html
 
 pub mod parser_generation;
 pub mod bpir;
