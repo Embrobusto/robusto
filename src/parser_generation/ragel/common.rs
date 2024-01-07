@@ -1,4 +1,4 @@
-use crate::bpir::{self, representation};
+use crate::bpir::{self, representation::{self, Field, FieldType, FieldAttribute, RegexFieldType, MaxLengthFieldAttribute}};
 use log;
 /// Generates an AST-like tree of patterns common for languages supporting
 /// procedural paradigm (Rust 2018, and ANSI C at this point).
@@ -38,7 +38,27 @@ pub struct MachineDefinitionAstNode {
 
 #[derive(Debug)]
 pub struct MessageStructAstNode {
-    fields: std::vec::Vec<representation::Field>,
+    pub message_name: std::string::String,
+}
+
+#[derive(Clone, Debug)]
+pub enum FieldBaseType {
+    I8,
+}
+
+#[derive(Clone, Debug)]
+pub struct MessageStructMemberAstNode {
+    pub name: std::string::String,
+    pub field_base_type: FieldBaseType,
+
+    /// If 0, it is considered just a field
+    pub array_length: usize,
+}
+
+impl MessageStructMemberAstNode {
+    pub fn is_array(&self) -> bool {
+        self.array_length > 0
+    }
 }
 
 #[derive(Debug)]
@@ -48,6 +68,7 @@ pub enum Ast {
     // Language-agnostic elements
     /// Just treat it as a mere sequence
     None,
+    MessageStructMember(MessageStructMemberAstNode),
 
     /// Ragel-specific machine header
     MachineHeader(MachineHeaderAstNode),
@@ -90,9 +111,45 @@ impl AstNode {
         self.add_child(Ast::MachineHeader(MachineHeaderAstNode {
             machine_name: message.name.clone(),
         }));
-        self.add_child(Ast::MessageStruct(MessageStructAstNode{
-            fields: message.fields.clone(),
+        let mut message_struct = self.add_child(Ast::MessageStruct(MessageStructAstNode{
+            message_name: message.name.clone(),
         }));
+
+        for field in &message.fields {
+            message_struct.add_child(Ast::MessageStructMember(MessageStructMemberAstNode {
+                name: field.name.clone(),
+                field_base_type: match field.field_type {
+                    FieldType::Regex(_) => FieldBaseType::I8,
+                },
+                array_length: {
+                    let mut value = 0;
+
+                    match field.field_type {
+                        FieldType::Regex(_) => {
+                            for attribute in &field.attributes {
+                                if let FieldAttribute::MaxLength(ref max_length) = attribute {
+                                    value = max_length.value
+                                }
+                            }
+                        }
+                    }
+
+                    if value == 0usize {
+                        value = representation::MaxLengthFieldAttribute::DEFAULT_VALUE;
+
+                        log::warn!(
+                            "Did not get \"MaxLength\" attribute for field \"{}\" in message \"{}\", using default \"{}\"",
+                            field.name,
+                            message.name,
+                            value,
+                        );
+                    }
+
+                    value
+                }
+            }));
+        }
+
         self.add_child(Ast::MachineDefinition(MachineDefinitionAstNode {
             machine_name: message.name.clone(),
         }));
