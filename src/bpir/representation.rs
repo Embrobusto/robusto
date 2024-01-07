@@ -100,7 +100,7 @@ pub enum MessageAttribute {
 pub enum ProtocolAttribute {
 }
 
-/// Represents a protocol's message as a sequence of bytes
+/// Represents a protocol's message as a sequence of fields
 #[derive(Debug)]
 pub struct Message {
     pub name: std::string::String,
