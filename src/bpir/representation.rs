@@ -57,13 +57,9 @@ use log;
 /// - accepted values;
 /// - hooks (for calculating checksums),
 /// etc.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum FieldAttribute {
-    /// Expected exact length
-    Length(usize),
-
-    /// Expect a certain sequence of bytes
-    ConstSequence(std::vec::Vec<u8>),
+    MaxLength(usize)
 }
 
 #[derive(Debug, Clone)]
@@ -101,6 +97,7 @@ pub struct Message {
 pub struct Field {
     pub name: std::string::String,
     pub field_type: FieldType,
+    pub attributes: std::vec::Vec<FieldAttribute>,
 }
 
 /// Represents the entire protocol as a set of messages
