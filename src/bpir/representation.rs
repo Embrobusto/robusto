@@ -53,14 +53,13 @@
 pub use std;
 use log;
 
-/// Allows getting default attribute value, if none was provided by the user
-pub trait DefaultAttributeValue<A> {
-    fn get_default_attribute_value() -> A;
-}
-
 #[derive(Debug, Clone)]
 pub struct MaxLengthFieldAttribute {
-    value: usize,
+    pub value: usize,
+}
+
+impl MaxLengthFieldAttribute {
+    pub const DEFAULT_VALUE: usize = 64usize;
 }
 
 /// Every field is modified with a set of attributes, such as
@@ -76,12 +75,6 @@ pub enum FieldAttribute {
 #[derive(Debug, Clone)]
 pub struct RegexFieldType {
     pub regex: std::string::String,
-}
-
-impl<T> DefaultAttributeValue<MaxLengthFieldAttribute> for T {
-    fn get_default_attribute_value() -> MaxLengthFieldAttribute {
-        MaxLengthFieldAttribute{value: 64usize}
-    }
 }
 
 #[derive(Debug, Clone)]
