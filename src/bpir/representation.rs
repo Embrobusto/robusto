@@ -59,7 +59,9 @@ pub struct MaxLengthFieldAttribute {
 }
 
 impl MaxLengthFieldAttribute {
-    pub const DEFAULT_VALUE: usize = 64usize;
+    pub fn get_default_value() -> usize {
+        64usize
+    }
 }
 
 /// Every field is modified with a set of attributes, such as

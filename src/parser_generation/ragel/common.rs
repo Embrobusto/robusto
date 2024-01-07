@@ -135,7 +135,7 @@ impl AstNode {
                     }
 
                     if value == 0usize {
-                        value = representation::MaxLengthFieldAttribute::DEFAULT_VALUE;
+                        value = representation::MaxLengthFieldAttribute::get_default_value();
 
                         log::warn!(
                             "Did not get \"MaxLength\" attribute for field \"{}\" in message \"{}\", using default \"{}\"",
