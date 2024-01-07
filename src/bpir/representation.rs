@@ -88,6 +88,7 @@ pub enum ProtocolAttribute {
 }
 
 /// Represents a protocol's message as a sequence of bytes
+#[derive(Debug)]
 pub struct Message {
     pub name: std::string::String,
     pub fields: std::vec::Vec<Field>,
@@ -96,12 +97,14 @@ pub struct Message {
 
 /// May be a regular field, such as byte sequence of fixed length, or u32, or a
 /// payload (nested message))
+#[derive(Debug)]
 pub struct Field {
     pub name: std::string::String,
     pub field_type: FieldType,
 }
 
 /// Represents the entire protocol as a set of messages
+#[derive(Debug)]
 pub struct Protocol {
     pub messages: std::vec::Vec<Message>,
     pub attributes: std::vec::Vec<ProtocolAttribute>,
