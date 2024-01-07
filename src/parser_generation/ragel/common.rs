@@ -1,4 +1,4 @@
-use crate::bpir;
+use crate::bpir::{self, representation};
 use log;
 /// Generates an AST-like tree of patterns common for languages supporting
 /// procedural paradigm (Rust 2018, and ANSI C at this point).
@@ -37,6 +37,11 @@ pub struct MachineDefinitionAstNode {
 }
 
 #[derive(Debug)]
+pub struct MessageStructAstNode {
+    fields: std::vec::Vec<representation::Field>,
+}
+
+#[derive(Debug)]
 pub enum Ast {
     // C-specific elements (TBD)
 
@@ -46,6 +51,7 @@ pub enum Ast {
 
     /// Ragel-specific machine header
     MachineHeader(MachineHeaderAstNode),
+    MessageStruct(MessageStructAstNode),
     MachineDefinition(MachineDefinitionAstNode),
     ParsingFunction(ParsingFunctionAstNode),
     RawStringSequence(RawStringSequenceAstNode),
@@ -83,6 +89,9 @@ impl AstNode {
     fn add_message_parser(&mut self, message: &bpir::representation::Message) {
         self.add_child(Ast::MachineHeader(MachineHeaderAstNode {
             machine_name: message.name.clone(),
+        }));
+        self.add_child(Ast::MessageStruct(MessageStructAstNode{
+            fields: message.fields.clone(),
         }));
         self.add_child(Ast::MachineDefinition(MachineDefinitionAstNode {
             machine_name: message.name.clone(),
