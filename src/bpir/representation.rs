@@ -66,12 +66,12 @@ pub enum FieldAttribute {
     ConstSequence(std::vec::Vec<u8>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct RegexFieldType {
     pub regex: std::string::String,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum FieldType {
     /// Expect a certain sequence of bytes
     Regex(RegexFieldType),
@@ -97,7 +97,7 @@ pub struct Message {
 
 /// May be a regular field, such as byte sequence of fixed length, or u32, or a
 /// payload (nested message))
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Field {
     pub name: std::string::String,
     pub field_type: FieldType,
