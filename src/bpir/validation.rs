@@ -10,13 +10,24 @@ use super::representation::Protocol;
 
 #[derive(Clone)]
 pub enum MessageFieldLintResult {
+    /// A particular linter did not find errors in the message's structure.
     Ok,
+
+    /// Something in the field presents a potential for errors.
     Warning(string::String),
+
+    /// Message is invalid
+    Error(string::String),
 }
 
+/// Aggregates the results of linting for each message of the protocol.
+/// Instances of `MessageFieldLintResult::Ok` are not included into the
+/// resulting report. If at least one instance of
+/// `MessageFieldLintResult::Error` is present, the protocol definition MUST be
+/// considered faulty.
 #[derive(Clone, Default)]
 pub struct ProtocolLintResult {
-    message_lint_results: vec::Vec<MessageFieldLintResult>,
+    pub message_lint_results: vec::Vec<MessageFieldLintResult>,
 }
 
 /// A linter implementing `MessageFieldLint` checks the correctness of a
@@ -126,6 +137,8 @@ impl CompositeMessageLinter {
     }
 }
 
+/// Invokes a series of linters on each message of the `protocol`. Produces a
+/// report consisting of Warnings and Errors that were found by the linters.
 pub fn validate_protocol(protocol: &representation::Protocol) -> ProtocolLintResult {
     let mut linter = CompositeMessageLinter::new();
     let mut protocol_lint_result = ProtocolLintResult::default();
