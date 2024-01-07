@@ -13,12 +13,14 @@
 //! entailed by hand-writing binary protocol-parsing / marshalling boilerplate
 //! code.
 //!
-//! Projects similar to Robusto:
-//! - https://docs.zeek.org/projects/spicy/en/latest/index.html
-//! - https://www.protlr.com/
-//! - https://github.com/commschamp/comms_champion
-//! - https://github.com/google/wuffs
-//! - https://doc.kaitai.io/faq.html
+//! Projects conceptually similar to Robusto:
+//! - [Spicy](https://docs.zeek.org/projects/spicy/en/latest/index.html)
+//! - [Protlr](https://www.protlr.com/)
+//! - [Comms Champion](https://github.com/commschamp/comms_champion)
+//! - [Wuffs](https://github.com/google/wuffs)
+//! - [Katai](https://doc.kaitai.io/faq.html)
+//! - [Protobuf](https://protobuf.dev/)
+//! - [Cap'n'Proto](https://capnproto.org/)
 
 pub mod parser_generation;
 pub mod bpir;
