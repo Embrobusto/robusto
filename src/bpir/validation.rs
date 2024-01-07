@@ -1,4 +1,6 @@
-/// Validates BPIR. Looks for common mistakes, and produces related output.
+//! Validates BPIR. Looks for common mistakes, and warns user of potential
+//! caveats, such as not specifying a field's max length.
+
 use crate::bpir::representation;
 use std::boxed;
 use std::string;
