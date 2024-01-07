@@ -1,8 +1,8 @@
 /// Validates BPIR. Looks for common mistakes, and produces related output.
 use crate::bpir::representation;
 use std::boxed;
-use std::vec;
 use std::string;
+use std::vec;
 
 enum MessageFieldLintResult {
     Ok,
@@ -47,7 +47,8 @@ impl MessageFieldLint for MockLinter {
     }
 }
 
-/// Makes sure that a regex field has "max length" attribute
+/// Makes sure that a "regex" field has "max length" attribute
+#[derive(Default)]
 struct RegexFieldMaxLengthLinter {}
 
 impl MessageFieldLint for RegexFieldMaxLengthLinter {
@@ -63,11 +64,14 @@ impl MessageFieldLint for RegexFieldMaxLengthLinter {
                         return MessageFieldLintResult::Ok;
                     }
                 }
-            },
-            _ => {},
+            }
+            _ => {}
         }
 
-        MessageFieldLintResult::Warning(format!("in message {0} field {1} does not have MaxLength attribute", message.name, field.name))
+        MessageFieldLintResult::Warning(format!(
+            "in message {0} field {1} does not have MaxLength attribute",
+            message.name, field.name
+        ))
     }
 }
 
@@ -83,6 +87,9 @@ impl CompositeMessageLinter {
         instance
             .pending_linters
             .push(boxed::Box::new(MockLinter::default()));
+        instance
+            .pending_linters
+            .push(boxed::Box::new(RegexFieldMaxLengthLinter::default()));
 
         instance
     }
