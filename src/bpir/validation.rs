@@ -2,9 +2,11 @@
 use crate::bpir::representation;
 use std::boxed;
 use std::vec;
+use std::string;
 
 enum MessageFieldLintResult {
     Ok,
+    Warning(string::String),
 }
 
 /// A linter implementing `MessageFieldLint` checks the correctness of a
@@ -45,14 +47,42 @@ impl MessageFieldLint for MockLinter {
     }
 }
 
+/// Makes sure that a regex field has "max length" attribute
+struct RegexFieldMaxLengthLinter {}
+
+impl MessageFieldLint for RegexFieldMaxLengthLinter {
+    fn lint_field(
+        &mut self,
+        message: &representation::Message,
+        field: &representation::Field,
+    ) -> MessageFieldLintResult {
+        match field.field_type {
+            representation::FieldType::Regex(_) => {
+                for attribute in &field.attributes {
+                    if let representation::FieldAttribute::MaxLength(_) = attribute {
+                        return MessageFieldLintResult::Ok;
+                    }
+                }
+            },
+            _ => {},
+        }
+
+        MessageFieldLintResult::Warning(format!("in message {0} field {1} does not have MaxLength attribute", message.name, field.name))
+    }
+}
+
 struct CompositeMessageLinter {
     pending_linters: vec::Vec<boxed::Box<dyn MessageFieldLint>>,
 }
 
 impl CompositeMessageLinter {
     pub fn new() -> Self {
-        let mut instance = CompositeMessageLinter{pending_linters: vec::Vec::default()};
-        instance.pending_linters.push(boxed::Box::new(MockLinter::default()));
+        let mut instance = CompositeMessageLinter {
+            pending_linters: vec::Vec::default(),
+        };
+        instance
+            .pending_linters
+            .push(boxed::Box::new(MockLinter::default()));
 
         instance
     }
@@ -65,7 +95,7 @@ impl CompositeMessageLinter {
 
     fn lint_field(&mut self, message: &representation::Message, field: &representation::Field) {
         for linter in &mut self.pending_linters {
-            linter.lint_field(message, field);  // TODO: save result
+            linter.lint_field(message, field); // TODO: save result
         }
     }
 }
