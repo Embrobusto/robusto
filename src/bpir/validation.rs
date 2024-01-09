@@ -132,7 +132,7 @@ impl CompositeMessageLinter {
         protocol_lint_result: &mut ProtocolLintResult,
     ) {
         for linter in &mut self.pending_linters {
-            protocol_lint_result.message_lint_results.push(linter.lint_field(message, field)); // TODO: save result
+            protocol_lint_result.message_lint_results.push(linter.lint_field(message, field));
         }
     }
 }
