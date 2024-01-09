@@ -6,10 +6,11 @@ use std::boxed;
 use std::string;
 use std::vec;
 
+use super::representation::Message;
 use super::representation::Protocol;
 
 #[derive(Clone)]
-pub enum MessageFieldLintResult {
+pub enum LintResult {
     /// A particular linter did not find errors in the message's structure.
     Ok,
 
@@ -21,13 +22,25 @@ pub enum MessageFieldLintResult {
 }
 
 /// Aggregates the results of linting for each message of the protocol.
-/// Instances of `MessageFieldLintResult::Ok` are not included into the
+/// Instances of `LintResult::Ok` are not included into the
 /// resulting report. If at least one instance of
-/// `MessageFieldLintResult::Error` is present, the protocol definition MUST be
+/// `LintResult::Error` is present, the protocol definition MUST be
 /// considered faulty.
 #[derive(Clone, Default)]
 pub struct ProtocolLintResult {
-    pub message_lint_results: vec::Vec<MessageFieldLintResult>,
+    pub message_lint_results: vec::Vec<LintResult>,
+}
+
+impl ProtocolLintResult {
+    fn count_errors(&self) -> usize {
+        self.message_lint_results
+            .iter()
+            .map(|ref item| match item {
+                LintResult::Error(_) => 1usize,
+                _ => 0usize,
+            })
+            .sum()
+    }
 }
 
 /// A linter implementing `MessageFieldLint` checks the correctness of a
@@ -52,7 +65,7 @@ trait MessageFieldLint {
         &mut self,
         message: &representation::Message,
         field: &representation::Field,
-    ) -> MessageFieldLintResult;
+    ) -> LintResult;
 }
 
 #[derive(Default)]
@@ -63,8 +76,8 @@ impl MessageFieldLint for MockLinter {
         &mut self,
         message: &representation::Message,
         field: &representation::Field,
-    ) -> MessageFieldLintResult {
-        MessageFieldLintResult::Ok
+    ) -> LintResult {
+        LintResult::Ok
     }
 }
 
@@ -77,19 +90,19 @@ impl MessageFieldLint for RegexFieldMaxLengthLinter {
         &mut self,
         message: &representation::Message,
         field: &representation::Field,
-    ) -> MessageFieldLintResult {
+    ) -> LintResult {
         match field.field_type {
             representation::FieldType::Regex(_) => {
                 for attribute in &field.attributes {
                     if let representation::FieldAttribute::MaxLength(_) = attribute {
-                        return MessageFieldLintResult::Ok;
+                        return LintResult::Ok;
                     }
                 }
             }
             _ => {}
         }
 
-        MessageFieldLintResult::Warning(format!(
+        LintResult::Warning(format!(
             "in message {0} field {1} does not have MaxLength attribute",
             message.name, field.name
         ))
@@ -132,7 +145,9 @@ impl CompositeMessageLinter {
         protocol_lint_result: &mut ProtocolLintResult,
     ) {
         for linter in &mut self.pending_linters {
-            protocol_lint_result.message_lint_results.push(linter.lint_field(message, field));
+            protocol_lint_result
+                .message_lint_results
+                .push(linter.lint_field(message, field));
         }
     }
 }
@@ -145,6 +160,22 @@ pub fn validate_protocol(protocol: &representation::Protocol) -> ProtocolLintRes
 
     for message in &protocol.messages {
         linter.lint_message(message, &mut protocol_lint_result);
+    }
+
+    for lint_result in &protocol_lint_result.message_lint_results {
+        match lint_result {
+            LintResult::Error(ref linting_message) => {
+                log::error!("Error: {}", linting_message);
+            }
+            LintResult::Warning(ref linting_message) => {
+                log::warn!("Warning: {}", linting_message)
+            }
+            _ => {}
+        }
+    }
+
+    if protocol_lint_result.count_errors() > 0 {
+        panic!("Protocol description is invalid, panicking");
     }
 
     protocol_lint_result
