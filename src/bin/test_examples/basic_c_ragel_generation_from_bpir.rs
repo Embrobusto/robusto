@@ -1,13 +1,12 @@
 use std::str::FromStr;
 
+use env_logger;
 /// This exapmple provides a test run of Ragel-based C code generation.
 /// It uses raw BPIR which then is passed down the chain:
 ///
 /// BPIR -> [ Ragel generator ] -> Ragel/C code -> [ Ragel ] -> Parser
-
 use robusto::{self, parser_generation::Write};
 use std;
-use env_logger;
 
 const OUTPUT_FILE_NAME: &'static str = "output.c.rl";
 
@@ -20,7 +19,11 @@ fn make_message_bpir() -> robusto::bpir::representation::Message {
 
     message.fields.push(robusto::bpir::representation::Field {
         name: std::string::String::from("preamble"),
-        field_type: robusto::bpir::representation::FieldType::Regex(robusto::bpir::representation::RegexFieldType{regex: "\\xfe".to_string()}),
+        field_type: robusto::bpir::representation::FieldType::Regex(
+            robusto::bpir::representation::RegexFieldType {
+                regex: "\\xfe".to_string(),
+            },
+        ),
         attributes: std::vec::Vec::default(),
     });
 
@@ -32,7 +35,7 @@ fn main() {
     env_logger::init();
 
     // Create a simple BPIR
-    let protocol = robusto::bpir::representation::Protocol{
+    let protocol = robusto::bpir::representation::Protocol {
         messages: vec![make_message_bpir()],
         attributes: vec![],
     };
