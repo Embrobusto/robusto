@@ -10,6 +10,8 @@ use std::fmt::write;
 use std::io::Write;
 use std::str::FromStr;
 
+use super::common::MessageStructMemberAstNode;
+
 const NEWLINE: &'static str = "\n";
 
 struct GenerationState {
@@ -20,6 +22,31 @@ struct GenerationState {
 impl GenerationState {
     fn new() -> GenerationState {
         GenerationState { indent: 0 }
+    }
+}
+
+trait CRepresentation {
+    fn as_c_variable_declaration(&self) -> std::string::String;
+}
+
+impl CRepresentation for parser_generation::ragel::common::MessageStructMemberAstNode {
+    /// Formats "MessageStructMemberAstNode" into "<TYPE> <NAME>[ARRAY LENGTH]"
+    fn as_c_variable_declaration(&self) -> std::string::String {
+        format!(
+            "{0} {1}{2}",
+            match self.field_base_type {
+                parser_generation::ragel::common::FieldBaseType::I8 => {"uint8_t"},
+                _ => {panic!("Unsupported type {:?}", self.field_base_type)},
+            },
+            self.name,
+            {
+                if self.array_length == 0usize {
+                    std::string::String::from("")
+                } else {
+                    format!("[{}]", self.array_length)
+                }
+            }
+        )
     }
 }
 
@@ -184,8 +211,17 @@ int cs;  // Current state -- Ragel-specific variable for C code generation
         node: &parser_generation::ragel::common::MessageStructAstNode,
         generation_state: &mut GenerationState,
     ) {
-        utility::string::write_with_indent_or_panic(buf_writer, generation_state.indent, format!("struct {0}Message {{", node.message_name).as_bytes());
+        utility::string::write_line_with_indent_or_panic(buf_writer, generation_state.indent, format!("struct {0}Message {{", node.message_name).as_bytes());
         generation_state.indent += 1;
+
+        for message_struct_member in &ast_node.children {
+            if let parser_generation::ragel::common::Ast::MessageStructMember(ref node) = message_struct_member.ast_node_type {
+                utility::string::write_line_with_indent_or_panic(buf_writer, generation_state.indent, format!("{0};", node.as_c_variable_declaration()).as_bytes());
+            } else {
+                log::error!("Unexpected child node \"{:?}\" within parent node \"{:?}\"", ast_node,
+                    message_struct_member);
+            }
+        }
 
         generation_state.indent -= 1;
         utility::string::write_line_with_indent_or_panic(buf_writer, generation_state.indent, "};".as_bytes());
