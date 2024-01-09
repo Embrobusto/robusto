@@ -78,6 +78,7 @@ pub enum Ast {
     RawStringSequence(RawStringSequenceAstNode),
 }
 
+#[derive(Debug)]
 pub struct AstNode {
     pub ast_node_type: Ast,
     pub children: std::vec::Vec<AstNode>,
