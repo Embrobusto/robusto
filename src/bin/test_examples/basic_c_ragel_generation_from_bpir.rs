@@ -36,6 +36,7 @@ fn main() {
         messages: vec![make_message_bpir()],
         attributes: vec![],
     };
+    let validation_results = robusto::bpir::validation::validate_protocol(&protocol);
 
     // Run Ragel code generation
     let file = std::fs::File::create(OUTPUT_FILE_NAME).unwrap();
