@@ -26,12 +26,12 @@ impl GenerationState {
 }
 
 trait CRepresentation {
-    fn as_c_variable_declaration(&self) -> std::string::String;
+    fn as_c_ragel(&self) -> std::string::String;
 }
 
 impl CRepresentation for parser_generation::ragel::common::MessageStructMemberAstNode {
     /// Formats "MessageStructMemberAstNode" into "<TYPE> <NAME>[ARRAY LENGTH]"
-    fn as_c_variable_declaration(&self) -> std::string::String {
+    fn as_c_ragel(&self) -> std::string::String {
         format!(
             "{0} {1}{2}",
             match self.field_base_type {
@@ -216,7 +216,7 @@ int cs;  // Current state -- Ragel-specific variable for C code generation
 
         for message_struct_member in &ast_node.children {
             if let parser_generation::ragel::common::Ast::MessageStructMember(ref node) = message_struct_member.ast_node_type {
-                utility::string::write_line_with_indent_or_panic(buf_writer, generation_state.indent, format!("{0};", node.as_c_variable_declaration()).as_bytes());
+                utility::string::write_line_with_indent_or_panic(buf_writer, generation_state.indent, format!("{0};", node.as_c_ragel()).as_bytes());
             } else {
                 log::error!("Unexpected child node \"{:?}\" within parent node \"{:?}\"", ast_node,
                     message_struct_member);
