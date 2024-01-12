@@ -35,6 +35,17 @@ impl Generator<'_> {
         Generator { ast: ast_node }
     }
 
+    fn generate_traverse_ast_node_children<W: std::io::Write>(
+        &self,
+        ast_node: &parser_generation::ragel::common::AstNode,
+        buf_writer: &mut std::io::BufWriter<W>,
+        generation_state: &mut GenerationState,
+    ) {
+        for child in &ast_node.children {
+            self.generate_traverse_ast_node(child, buf_writer, generation_state);
+        }
+    }
+
     fn generate_traverse_ast_node<W: std::io::Write>(
         &self,
         ast_node: &parser_generation::ragel::common::AstNode,
@@ -42,24 +53,36 @@ impl Generator<'_> {
         generation_state: &mut GenerationState,
     ) {
         match ast_node.ast_node_type {
-            parser_generation::ragel::common::Ast::MachineHeader(ref node) => self.generate_machine_header(
+            parser_generation::ragel::common::Ast::MachineHeader(ref node) => self
+                .generate_machine_header(
                     ast_node,
                     buf_writer,
                     &node.machine_name,
                     generation_state,
                 ),
-            parser_generation::ragel::common::Ast::MachineDefinition(ref node) => self.generate_machine_definition(ast_node, buf_writer, &node, generation_state),
+            parser_generation::ragel::common::Ast::MachineDefinition(ref node) => {
+                self.generate_machine_definition(ast_node, buf_writer, &node, generation_state);
+            }
             parser_generation::ragel::common::Ast::None => {
-                for ast_node_child in &ast_node.children {
-                    self.generate_traverse_ast_node(ast_node_child, buf_writer, generation_state);
-                }
+                self.generate_traverse_ast_node_children(ast_node, buf_writer, generation_state);
             }
             parser_generation::ragel::common::Ast::ParsingFunction(ref node) => {
                 self.generate_parsing_function(ast_node, buf_writer, &node, generation_state);
-            },
+            }
             parser_generation::ragel::common::Ast::MessageStruct(ref node) => {
                 self.generate_message_struct(ast_node, buf_writer, &node, generation_state);
-            },
+            }
+            parser_generation::ragel::common::Ast::MessageStructMember(ref node) => {
+                self.generate_message_struct_member(ast_node, buf_writer, node, generation_state);
+            }
+            parser_generation::ragel::common::Ast::RawStringSequence(ref node) => {
+                self.generate_raw_string_sequence_parser(
+                    ast_node,
+                    buf_writer,
+                    node,
+                    generation_state,
+                );
+            }
             _ => {
                 log::error!(
                     "Unmatched node \"{:?}\", panicking!",
@@ -81,7 +104,7 @@ impl Generator<'_> {
             buf_writer,
             generation_state.indent,
             format!(
-"%%{{
+                "%%{{
     machine {machine_name};
     write data;
 %%}}
@@ -98,7 +121,8 @@ void machine{machine_name}ParserStateInit(struct {machine_name}ParserState *aPar
     %% write init;
 }}
 "
-            ).as_bytes(),
+            )
+            .as_bytes(),
         );
     }
 
@@ -113,19 +137,29 @@ void machine{machine_name}ParserStateInit(struct {machine_name}ParserState *aPar
             buf_writer,
             generation_state.indent,
             format!(
-"%%{{
+                "%%{{
     machine {0};
     access aParserState->;
 ",
-            node.machine_name).as_bytes(),
+                node.machine_name
+            )
+            .as_bytes(),
         );
         generation_state.indent += 1;
 
         // TODO: iterate through fields
 
         generation_state.indent -= 1;
-        utility::string::write_line_with_indent_or_panic( buf_writer, generation_state.indent, "%%}".as_bytes());
-        utility::string::write_line_with_indent_or_panic( buf_writer, generation_state.indent, "".as_bytes());
+        utility::string::write_line_with_indent_or_panic(
+            buf_writer,
+            generation_state.indent,
+            "%%}".as_bytes(),
+        );
+        utility::string::write_line_with_indent_or_panic(
+            buf_writer,
+            generation_state.indent,
+            "".as_bytes(),
+        );
     }
 
     fn generate_parsing_function<W: std::io::Write>(
@@ -161,22 +195,12 @@ int cs;  // Current state -- Ragel-specific variable for C code generation
 "
         ).as_bytes());
         generation_state.indent -= 1;
-        utility::string::write_line_with_indent_or_panic(buf_writer, generation_state.indent, "}".as_bytes());
-
-        // Iterate through children
-        for child_node in &ast_node.children {
-            match child_node.ast_node_type {
-                parser_generation::ragel::common::Ast::RawStringSequence(ref node) => {
-                    self.generate_raw_string_sequence_parser(
-                        child_node,
-                        buf_writer,
-                        node,
-                        generation_state,
-                    );
-                }
-                _ => {} // TODO: MUST NOT get here
-            }
-        }
+        utility::string::write_line_with_indent_or_panic(
+            buf_writer,
+            generation_state.indent,
+            "}".as_bytes(),
+        );
+        self.generate_traverse_ast_node_children(ast_node, buf_writer, generation_state);
     }
 
     fn generate_message_struct<W: std::io::Write>(
@@ -186,20 +210,19 @@ int cs;  // Current state -- Ragel-specific variable for C code generation
         node: &parser_generation::ragel::common::MessageStructAstNode,
         generation_state: &mut GenerationState,
     ) {
-        utility::string::write_line_with_indent_or_panic(buf_writer, generation_state.indent, format!("struct {0}Message {{", node.message_name).as_bytes());
+        utility::string::write_line_with_indent_or_panic(
+            buf_writer,
+            generation_state.indent,
+            format!("struct {0}Message {{", node.message_name).as_bytes(),
+        );
         generation_state.indent += 1;
-
-        for message_struct_member in &ast_node.children {
-            if let parser_generation::ragel::common::Ast::MessageStructMember(ref node) = message_struct_member.ast_node_type {
-                self.generate_message_struct_member(ast_node, buf_writer, node, generation_state);
-            } else {
-                log::error!("Unexpected child node \"{:?}\" within parent node \"{:?}\"", ast_node,
-                    message_struct_member);
-            }
-        }
-
+        self.generate_traverse_ast_node_children(ast_node, buf_writer, generation_state);
         generation_state.indent -= 1;
-        utility::string::write_line_with_indent_or_panic(buf_writer, generation_state.indent, "};".as_bytes());
+        utility::string::write_line_with_indent_or_panic(
+            buf_writer,
+            generation_state.indent,
+            "};".as_bytes(),
+        );
     }
 
     fn generate_message_struct_member<W: std::io::Write>(
@@ -212,8 +235,12 @@ int cs;  // Current state -- Ragel-specific variable for C code generation
         let formatted = format!(
             "{0} {1}{2};",
             match node.field_base_type {
-                parser_generation::ragel::common::FieldBaseType::I8 => {"uint8_t"},
-                _ => {panic!("Unsupported type {:?}", node.field_base_type)},
+                parser_generation::ragel::common::FieldBaseType::I8 => {
+                    "uint8_t"
+                }
+                _ => {
+                    panic!("Unsupported type {:?}", node.field_base_type)
+                }
             },
             node.name,
             {
@@ -224,7 +251,11 @@ int cs;  // Current state -- Ragel-specific variable for C code generation
                 }
             }
         );
-        utility::string::write_line_with_indent_or_panic(buf_writer, generation_state.indent, formatted.as_bytes());
+        utility::string::write_line_with_indent_or_panic(
+            buf_writer,
+            generation_state.indent,
+            formatted.as_bytes(),
+        );
     }
 
     fn generate_raw_string_sequence_parser<W: std::io::Write>(
