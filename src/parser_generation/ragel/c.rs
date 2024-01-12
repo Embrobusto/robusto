@@ -25,31 +25,6 @@ impl GenerationState {
     }
 }
 
-trait CRepresentation {
-    fn as_c_ragel(&self) -> std::string::String;
-}
-
-impl CRepresentation for parser_generation::ragel::common::MessageStructMemberAstNode {
-    /// Formats "MessageStructMemberAstNode" into "<TYPE> <NAME>[ARRAY LENGTH]"
-    fn as_c_ragel(&self) -> std::string::String {
-        format!(
-            "{0} {1}{2}",
-            match self.field_base_type {
-                parser_generation::ragel::common::FieldBaseType::I8 => {"uint8_t"},
-                _ => {panic!("Unsupported type {:?}", self.field_base_type)},
-            },
-            self.name,
-            {
-                if self.array_length == 0usize {
-                    std::string::String::from("")
-                } else {
-                    format!("[{}]", self.array_length)
-                }
-            }
-        )
-    }
-}
-
 /// C-specific Ragel AST
 pub struct Generator<'a> {
     ast: &'a parser_generation::ragel::common::AstNode,
@@ -216,7 +191,7 @@ int cs;  // Current state -- Ragel-specific variable for C code generation
 
         for message_struct_member in &ast_node.children {
             if let parser_generation::ragel::common::Ast::MessageStructMember(ref node) = message_struct_member.ast_node_type {
-                utility::string::write_line_with_indent_or_panic(buf_writer, generation_state.indent, format!("{0};", node.as_c_ragel()).as_bytes());
+                self.generate_message_struct_member(ast_node, buf_writer, node, generation_state);
             } else {
                 log::error!("Unexpected child node \"{:?}\" within parent node \"{:?}\"", ast_node,
                     message_struct_member);
@@ -225,6 +200,31 @@ int cs;  // Current state -- Ragel-specific variable for C code generation
 
         generation_state.indent -= 1;
         utility::string::write_line_with_indent_or_panic(buf_writer, generation_state.indent, "};".as_bytes());
+    }
+
+    fn generate_message_struct_member<W: std::io::Write>(
+        &self,
+        ast_node: &parser_generation::ragel::common::AstNode,
+        buf_writer: &mut std::io::BufWriter<W>,
+        node: &parser_generation::ragel::common::MessageStructMemberAstNode,
+        generation_state: &mut GenerationState,
+    ) {
+        let formatted = format!(
+            "{0} {1}{2};",
+            match node.field_base_type {
+                parser_generation::ragel::common::FieldBaseType::I8 => {"uint8_t"},
+                _ => {panic!("Unsupported type {:?}", node.field_base_type)},
+            },
+            node.name,
+            {
+                if node.array_length == 0usize {
+                    std::string::String::from("")
+                } else {
+                    format!("[{}]", node.array_length)
+                }
+            }
+        );
+        utility::string::write_line_with_indent_or_panic(buf_writer, generation_state.indent, formatted.as_bytes());
     }
 
     fn generate_raw_string_sequence_parser<W: std::io::Write>(
