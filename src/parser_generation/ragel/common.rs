@@ -1,4 +1,9 @@
-use crate::bpir::{self, representation::{self, Field, FieldType, FieldAttribute, RegexFieldType, MaxLengthFieldAttribute}};
+use crate::bpir::{
+    self,
+    representation::{
+        self, Field, FieldAttribute, FieldType, MaxLengthFieldAttribute, RegexFieldType,
+    },
+};
 use log;
 /// Generates an AST-like tree of patterns common for languages supporting
 /// procedural paradigm (Rust 2018, and ANSI C at this point).
@@ -61,6 +66,12 @@ impl MessageStructMemberAstNode {
     }
 }
 
+#[derive(Clone, Debug)]
+pub struct MachineActionHookAstNode {
+    /// Coincides w/ the field's name
+    pub name: std::string::String,
+}
+
 #[derive(Debug)]
 pub enum Ast {
     // C-specific elements (TBD)
@@ -72,6 +83,7 @@ pub enum Ast {
 
     /// Ragel-specific machine header
     MachineHeader(MachineHeaderAstNode),
+    MachineActionHook(MachineActionHookAstNode),
     MessageStruct(MessageStructAstNode),
     MachineDefinition(MachineDefinitionAstNode),
     ParsingFunction(ParsingFunctionAstNode),
@@ -82,6 +94,24 @@ pub enum Ast {
 pub struct AstNode {
     pub ast_node_type: Ast,
     pub children: std::vec::Vec<AstNode>,
+}
+
+impl Into<Ast> for AstNode {
+    fn into(self) -> Ast {
+        self.ast_node_type
+    }
+}
+
+impl AsRef<Ast> for AstNode {
+    fn as_ref(&self) -> &Ast {
+        &self.ast_node_type
+    }
+}
+
+impl AsMut<Ast> for AstNode {
+    fn as_mut(&mut self) -> &mut Ast {
+        &mut self.ast_node_type
+    }
 }
 
 impl AstNode {
@@ -111,7 +141,7 @@ impl AstNode {
         self.add_child(Ast::MachineHeader(MachineHeaderAstNode {
             machine_name: message.name.clone(),
         }));
-        let mut message_struct = self.add_child(Ast::MessageStruct(MessageStructAstNode{
+        let mut message_struct = self.add_child(Ast::MessageStruct(MessageStructAstNode {
             message_name: message.name.clone(),
         }));
 
@@ -150,9 +180,15 @@ impl AstNode {
             }));
         }
 
-        self.add_child(Ast::MachineDefinition(MachineDefinitionAstNode {
-            machine_name: message.name.clone(),
-        }));
+        let mut machine_definition_node =
+            self.add_child(Ast::MachineDefinition(MachineDefinitionAstNode {
+                machine_name: message.name.clone(),
+            }));
+
+        for field in &message.fields {
+            machine_definition_node.add_machine_action_hook(field);
+        }
+
         let mut parsing_function = self.add_child(Ast::ParsingFunction(ParsingFunctionAstNode {
             message_name: message.name.clone(),
         }));
@@ -160,6 +196,12 @@ impl AstNode {
         for field in &message.fields {
             parsing_function.add_field_parser(field);
         }
+    }
+
+    fn add_machine_action_hook(&mut self, field: &bpir::representation::Field) {
+        self.add_child(Ast::MachineActionHook(MachineActionHookAstNode {
+            name: field.name.clone(),
+        }));
     }
 
     fn add_field_parser(&mut self, field: &bpir::representation::Field) {
