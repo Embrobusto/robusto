@@ -295,7 +295,7 @@ const char *pe = aInputBuffer + aInputBufferLength;  // Iterator \"end\" pointer
         utility::string::write_line_with_indent_or_panic(
             buf_writer,
             generation_state.indent,
-            format!("{0} = {1} @{0}; ", node.name, node.string_sequence).as_bytes(),
+            format!("{0} = '{1}' @{0}; ", node.name, node.string_sequence).as_bytes(),
         );
     }
 }
