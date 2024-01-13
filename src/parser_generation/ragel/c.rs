@@ -196,7 +196,6 @@ void machine{machine_name}ParserStateInit(struct {machine_name}ParserState *aPar
         utility::string::write_with_indent_or_panic(buf_writer, generation_state.indent, format!(
 "const char *p = aInputBuffer;  // Iterator \"begin\" pointer -- Ragel-specific variable for C code generation
 const char *pe = aInputBuffer + aInputBufferLength;  // Iterator \"end\" pointer -- Ragel-specific variable for C code generation
-int cs;  // Current state -- Ragel-specific variable for C code generation
 
 // Parse starting from the state defined in `aParserState`
 %% write exec;
