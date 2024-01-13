@@ -161,7 +161,7 @@ void machine{machine_name}ParserStateInit(struct {machine_name}ParserState *aPar
         utility::string::write_line_with_indent_or_panic(
             buf_writer,
             generation_state.indent,
-            "%%}".as_bytes(),
+            "}%%".as_bytes(),
         );
         utility::string::write_line_with_indent_or_panic(
             buf_writer,
