@@ -110,7 +110,7 @@ impl Generator<'_> {
                 "%%{{
     machine {machine_name};
     write data;
-%%}}
+}}%%
 
 struct {machine_name}ParserState {{
     int machineInitRequired;
