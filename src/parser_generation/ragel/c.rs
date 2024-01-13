@@ -73,6 +73,9 @@ impl Generator<'_> {
             parser_generation::ragel::common::Ast::RawStringSequence(ref node) => {
                 self.generate_raw_string_sequence_parser(ast_node, buf_writer, node, generation_state,);
             }
+            parser_generation::ragel::common::Ast::MachineActionHook(ref node) => {
+                self.generate_machine_action_hook(ast_node, buf_writer, node, generation_state,);
+            }
             _ => {
                 log::error!(
                     "Unmatched node \"{:?}\", panicking!",
@@ -137,7 +140,7 @@ void machine{machine_name}ParserStateInit(struct {machine_name}ParserState *aPar
         );
         generation_state.indent += 1;
 
-        // TODO: iterate through fields
+        self.generate_traverse_ast_node_children(ast_node, buf_writer, generation_state);
 
         generation_state.indent -= 1;
         utility::string::write_line_with_indent_or_panic(
@@ -246,6 +249,20 @@ int cs;  // Current state -- Ragel-specific variable for C code generation
             generation_state.indent,
             formatted.as_bytes(),
         );
+    }
+
+    fn generate_machine_action_hook<W: std::io::Write>(
+        &self,
+        ast_node: &parser_generation::ragel::common::AstNode,
+        buf_writer: &mut std::io::BufWriter<W>,
+        node: &parser_generation::ragel::common::MachineActionHookAstNode,
+        generation_state: &mut GenerationState,
+    ) {
+        utility::string::write_with_indent_or_panic(buf_writer, generation_state.indent, format!(
+"action {0} {{
+}}
+",
+        node.name).as_bytes());
     }
 
     fn generate_raw_string_sequence_parser<W: std::io::Write>(
