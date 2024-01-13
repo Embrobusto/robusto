@@ -54,12 +54,7 @@ impl Generator<'_> {
     ) {
         match ast_node.ast_node_type {
             parser_generation::ragel::common::Ast::MachineHeader(ref node) => self
-                .generate_machine_header(
-                    ast_node,
-                    buf_writer,
-                    &node.machine_name,
-                    generation_state,
-                ),
+                .generate_machine_header(ast_node, buf_writer, &node.machine_name, generation_state,),
             parser_generation::ragel::common::Ast::MachineDefinition(ref node) => {
                 self.generate_machine_definition(ast_node, buf_writer, &node, generation_state);
             }
@@ -76,12 +71,7 @@ impl Generator<'_> {
                 self.generate_message_struct_member(ast_node, buf_writer, node, generation_state);
             }
             parser_generation::ragel::common::Ast::RawStringSequence(ref node) => {
-                self.generate_raw_string_sequence_parser(
-                    ast_node,
-                    buf_writer,
-                    node,
-                    generation_state,
-                );
+                self.generate_raw_string_sequence_parser(ast_node, buf_writer, node, generation_state,);
             }
             _ => {
                 log::error!(
