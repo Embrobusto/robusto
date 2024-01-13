@@ -27,8 +27,10 @@ pub struct ParsingFunctionAstNode {
 }
 
 #[derive(Debug)]
-pub struct RawStringSequenceAstNode {
+pub struct RegexMachineFieldAstNode {
+    /// Ragel machine string sequence (definition)
     pub string_sequence: std::string::String,
+    pub name: std::string::String,
 }
 
 #[derive(Debug)]
@@ -87,7 +89,7 @@ pub enum Ast {
     MessageStruct(MessageStructAstNode),
     MachineDefinition(MachineDefinitionAstNode),
     ParsingFunction(ParsingFunctionAstNode),
-    RawStringSequence(RawStringSequenceAstNode),
+    RegexMachineField(RegexMachineFieldAstNode),
 }
 
 #[derive(Debug)]
@@ -189,12 +191,15 @@ impl AstNode {
             machine_definition_node.add_machine_action_hook(field);
         }
 
+        for field in &message.fields {
+            machine_definition_node.add_machine_field_parser(field);
+        }
+
         let mut parsing_function = self.add_child(Ast::ParsingFunction(ParsingFunctionAstNode {
             message_name: message.name.clone(),
         }));
 
         for field in &message.fields {
-            parsing_function.add_field_parser(field);
         }
     }
 
@@ -204,20 +209,19 @@ impl AstNode {
         }));
     }
 
-    fn add_field_parser(&mut self, field: &bpir::representation::Field) {
+    fn add_machine_field_parser(&mut self, field: &bpir::representation::Field) {
         use std::fmt;
 
         match field.field_type {
-            bpir::representation::FieldType::Regex(_) => self.add_regex_field_parser(field),
+            bpir::representation::FieldType::Regex(ref node) => self.add_regex_machine_field_parser(field, node),
         }
         // Get field type
     }
 
-    fn add_regex_field_parser(&mut self, field: &bpir::representation::Field) {
-        if let bpir::representation::FieldType::Regex(ref regex) = field.field_type {
-            self.add_child(Ast::RawStringSequence(RawStringSequenceAstNode {
-                string_sequence: format!("%%{{ {} := {} %%}}", field.name, regex.regex),
-            }));
-        }
+    fn add_regex_machine_field_parser(&mut self, field: &bpir::representation::Field, regex: &bpir::representation::RegexFieldType) {
+        self.add_child(Ast::RegexMachineField(RegexMachineFieldAstNode {
+            string_sequence: regex.regex.clone(),
+            name: field.name.clone(),
+        }));
     }
 }
