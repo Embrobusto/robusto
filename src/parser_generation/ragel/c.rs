@@ -54,7 +54,12 @@ impl Generator<'_> {
     ) {
         match ast_node.ast_node_type {
             parser_generation::ragel::common::Ast::MachineHeader(ref node) => self
-                .generate_machine_header(ast_node, buf_writer, &node.machine_name, generation_state,),
+                .generate_machine_header(
+                    ast_node,
+                    buf_writer,
+                    &node.machine_name,
+                    generation_state,
+                ),
             parser_generation::ragel::common::Ast::MachineDefinition(ref node) => {
                 self.generate_machine_definition(ast_node, buf_writer, &node, generation_state);
             }
@@ -71,10 +76,15 @@ impl Generator<'_> {
                 self.generate_message_struct_member(ast_node, buf_writer, node, generation_state);
             }
             parser_generation::ragel::common::Ast::RegexMachineField(ref node) => {
-                self.generate_regex_machine_field_parser(ast_node, buf_writer, node, generation_state,);
+                self.generate_regex_machine_field_parser(
+                    ast_node,
+                    buf_writer,
+                    node,
+                    generation_state,
+                );
             }
             parser_generation::ragel::common::Ast::MachineActionHook(ref node) => {
-                self.generate_machine_action_hook(ast_node, buf_writer, node, generation_state,);
+                self.generate_machine_action_hook(ast_node, buf_writer, node, generation_state);
             }
             _ => {
                 log::error!(
@@ -141,6 +151,11 @@ void machine{machine_name}ParserStateInit(struct {machine_name}ParserState *aPar
         generation_state.indent += 1;
 
         self.generate_traverse_ast_node_children(ast_node, buf_writer, generation_state);
+        utility::string::write_line_with_indent_or_panic(
+            buf_writer,
+            generation_state.indent,
+            format!("main := {0};", node.fields.join(" ")).as_bytes(),
+        );
 
         generation_state.indent -= 1;
         utility::string::write_line_with_indent_or_panic(
@@ -258,11 +273,17 @@ int cs;  // Current state -- Ragel-specific variable for C code generation
         node: &parser_generation::ragel::common::MachineActionHookAstNode,
         generation_state: &mut GenerationState,
     ) {
-        utility::string::write_with_indent_or_panic(buf_writer, generation_state.indent, format!(
-"action {0} {{
+        utility::string::write_with_indent_or_panic(
+            buf_writer,
+            generation_state.indent,
+            format!(
+                "action {0} {{
 }}
 ",
-        node.name).as_bytes());
+                node.name
+            )
+            .as_bytes(),
+        );
     }
 
     fn generate_regex_machine_field_parser<W: std::io::Write>(
@@ -272,10 +293,11 @@ int cs;  // Current state -- Ragel-specific variable for C code generation
         node: &parser_generation::ragel::common::RegexMachineFieldAstNode,
         generation_state: &mut GenerationState,
     ) {
-        utility::string::write_line_with_indent_or_panic(buf_writer, generation_state.indent, format!(
-"{0} = {1} @{0};
-",
-        node.name, node.string_sequence).as_bytes());
+        utility::string::write_line_with_indent_or_panic(
+            buf_writer,
+            generation_state.indent,
+            format!("{0} = {1} @{0}; ", node.name, node.string_sequence).as_bytes(),
+        );
     }
 }
 

@@ -41,6 +41,7 @@ pub struct MachineHeaderAstNode {
 #[derive(Debug)]
 pub struct MachineDefinitionAstNode {
     pub machine_name: std::string::String,
+    pub fields: std::vec::Vec<String>,
 }
 
 #[derive(Debug)]
@@ -185,6 +186,7 @@ impl AstNode {
         let mut machine_definition_node =
             self.add_child(Ast::MachineDefinition(MachineDefinitionAstNode {
                 machine_name: message.name.clone(),
+                fields: message.fields.iter().map(|f| f.name.clone()).collect(),
             }));
 
         for field in &message.fields {
