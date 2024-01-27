@@ -99,14 +99,14 @@ pub enum Ast {
     RegexMachineField(RegexMachineFieldAstNode),
 }
 
-struct GenerationState {
+struct CodeGenerationState {
     // Current indent.
     indent: usize,
 }
 
-impl GenerationState {
-    fn new() -> GenerationState {
-        GenerationState { indent: 0 }
+impl CodeGenerationState {
+    fn new() -> CodeGenerationState {
+        CodeGenerationState { indent: 0 }
     }
 }
 
@@ -123,7 +123,7 @@ impl CodeGeneration<'_> {
         &self,
         ast_node: &AstNode,
         buf_writer: &mut std::io::BufWriter<W>,
-        generation_state: &mut GenerationState,
+        generation_state: &mut CodeGenerationState,
     ) {
         for child in &ast_node.children {
             self.generate_traverse_ast_node(child, buf_writer, generation_state);
@@ -134,7 +134,7 @@ impl CodeGeneration<'_> {
         &self,
         ast_node: &AstNode,
         buf_writer: &mut std::io::BufWriter<W>,
-        generation_state: &mut GenerationState,
+        generation_state: &mut CodeGenerationState,
     ) {
         match ast_node.ast_node_type {
             Ast::MachineHeader(ref node) => self
@@ -185,7 +185,7 @@ impl CodeGeneration<'_> {
         ast_node: &AstNode,
         buf_writer: &mut std::io::BufWriter<W>,
         machine_name: &std::string::String,
-        generation_state: &mut GenerationState,
+        generation_state: &mut CodeGenerationState,
     ) {
         utility::string::write_with_indent_or_panic(
             buf_writer,
@@ -218,7 +218,7 @@ void machine{machine_name}ParserStateInit(struct {machine_name}ParserState *aPar
         ast_node: &AstNode,
         buf_writer: &mut std::io::BufWriter<W>,
         node: &MachineDefinitionAstNode,
-        generation_state: &mut GenerationState,
+        generation_state: &mut CodeGenerationState,
     ) {
         utility::string::write_with_indent_or_panic(
             buf_writer,
@@ -259,7 +259,7 @@ void machine{machine_name}ParserStateInit(struct {machine_name}ParserState *aPar
         ast_node: &AstNode,
         buf_writer: &mut std::io::BufWriter<W>,
         node: &ParsingFunctionAstNode,
-        generation_state: &mut GenerationState,
+        generation_state: &mut CodeGenerationState,
     ) {
         // Generate ragel parsing function state
         utility::string::write_line_with_indent_or_panic(
@@ -299,7 +299,7 @@ const char *pe = aInputBuffer + aInputBufferLength;  // Iterator \"end\" pointer
         ast_node: &AstNode,
         buf_writer: &mut std::io::BufWriter<W>,
         node: &MessageStructAstNode,
-        generation_state: &mut GenerationState,
+        generation_state: &mut CodeGenerationState,
     ) {
         utility::string::write_line_with_indent_or_panic(
             buf_writer,
@@ -321,7 +321,7 @@ const char *pe = aInputBuffer + aInputBufferLength;  // Iterator \"end\" pointer
         ast_node: &AstNode,
         buf_writer: &mut std::io::BufWriter<W>,
         node: &MessageStructMemberAstNode,
-        generation_state: &mut GenerationState,
+        generation_state: &mut CodeGenerationState,
     ) {
         let formatted = format!(
             "{0} {1}{2};",
@@ -354,7 +354,7 @@ const char *pe = aInputBuffer + aInputBufferLength;  // Iterator \"end\" pointer
         ast_node: &AstNode,
         buf_writer: &mut std::io::BufWriter<W>,
         node: &MachineActionHookAstNode,
-        generation_state: &mut GenerationState,
+        generation_state: &mut CodeGenerationState,
     ) {
         utility::string::write_with_indent_or_panic(
             buf_writer,
@@ -374,7 +374,7 @@ const char *pe = aInputBuffer + aInputBufferLength;  // Iterator \"end\" pointer
         ast_node: &AstNode,
         buf_writer: &mut std::io::BufWriter<W>,
         node: &RegexMachineFieldAstNode,
-        generation_state: &mut GenerationState,
+        generation_state: &mut CodeGenerationState,
     ) {
         utility::string::write_line_with_indent_or_panic(
             buf_writer,
