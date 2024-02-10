@@ -4,6 +4,7 @@ use crate::parser_generation;
 use crate::utility;
 use crate::utility::codegen;
 use crate::utility::codegen::CodeChunk;
+use crate::bpir::representation::Protocol;
 use log;
 use std;
 use std::collections::LinkedList;
@@ -271,6 +272,7 @@ impl codegen::CodeGeneration for ParsingFunciton {
 }
 
 enum AstNodeType {
+    Root,
     ParsingFunction(ParsingFunciton),
     ParserStateStruct(ParserStateStruct),
     ParserStateInitFunction(ParserStateInitFunction),
@@ -282,6 +284,58 @@ enum AstNodeType {
 struct AstNode {
     ast_node_type: AstNodeType,
     children: Vec<AstNode>,
+}
+
+impl AstNode {
+    fn new() -> AstNode {
+        AstNode {
+            ast_node_type: AstNodeType::Root,
+            children: Vec::new(),
+        }
+    }
+
+    fn add_child(&mut self, ast_node_type: AstNodeType) -> &mut AstNode {
+        self.children.push(AstNode {
+            ast_node_type,
+            children: Vec::new()
+        });
+
+        self.children.last_mut().unwrap()
+    }
+}
+
+/// AST tree for generating C source files
+struct SourceAstNode {
+    ast_node: AstNode,
+}
+
+impl From<&Protocol> for SourceAstNode {
+    fn from(protocol: &Protocol) -> Self {
+        let common_ast_node = common::AstNode::from(protocol);
+        let mut ret = Self {
+            ast_node: AstNode::new(),
+        };
+
+        // TODO: build the tree
+
+        ret
+    }
+}
+
+struct HeaderAstNode {
+    ast_node: AstNode,
+}
+
+impl From<&Protocol> for HeaderAstNode {
+    fn from(protocol: &Protocol) -> Self {
+        let mut ret = Self {
+            ast_node: AstNode::new(),
+        };
+
+        // TODO: build the tree
+
+        ret
+    }
 }
 
 /// C-specific Ragel AST
