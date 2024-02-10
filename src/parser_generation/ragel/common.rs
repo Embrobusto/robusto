@@ -215,19 +215,6 @@ impl From<& bpir::representation::Protocol> for AstNode {
 ///  Generates an intermediate AST node which then will get transformed into the
 ///  actual AST node for a target language
 impl AstNode {
-    pub fn from_protocol(protocol: &bpir::representation::Protocol) -> AstNode {
-        let mut root = AstNode {
-            ast_node_type: AstNodeType::None,
-            children: vec![],
-        };
-
-        for message in &protocol.messages {
-            root.add_message_parser(message);
-        }
-
-        root
-    }
-
     /// Adds a new child to a node. Returns reference to the new child
     fn add_child(&mut self, ast_node_type: AstNodeType) -> &mut AstNode {
         let child = AstNode {
