@@ -1,10 +1,14 @@
+use crate::bpir::representation::Message;
 /// Generates C code from procedural representation
 use crate::parser_generation;
 use crate::utility;
+use crate::utility::codegen;
+use crate::utility::codegen::CodeChunk;
 use log;
 use std;
-
-const NEWLINE: &'static str = "\n";
+use std::collections::LinkedList;
+use std::string::String;
+use std::vec::Vec;
 
 struct GenerationState {
     // Current indent.
@@ -15,6 +19,266 @@ impl GenerationState {
     fn new() -> GenerationState {
         GenerationState { indent: 0 }
     }
+}
+
+struct ParsingFunciton {
+    message_name: String,
+}
+
+#[derive(Debug)]
+pub struct MessageStruct {
+    pub message_name: std::string::String,
+}
+
+impl codegen::CodeGeneration for MessageStruct {
+    fn generate_code(
+        &self,
+        code_generation_state: &mut codegen::CodeGenerationState,
+    ) -> LinkedList<CodeChunk> {
+        let mut ret = LinkedList::<codegen::CodeChunk>::new();
+
+        // Generate struct header
+        ret.push_back(CodeChunk::new(
+            format!("struct {0}Message {{", self.message_name),
+            code_generation_state.indent,
+            1usize,
+        ));
+
+        // Generate the content
+        code_generation_state.indent += 1;
+        code_generation_state.indent -= 1;
+
+        // Close the bracket
+        ret.push_back(CodeChunk::new(
+            "}".to_string(),
+            code_generation_state.indent,
+            1usize,
+        ));
+
+        ret
+    }
+
+    fn generate_code_post_iter(
+        &self,
+        code_generation_state: &mut codegen::CodeGenerationState,
+    ) -> LinkedList<CodeChunk> {
+        let mut ret = LinkedList::<codegen::CodeChunk>::new();
+        code_generation_state.indent -= 1;
+
+        // Close the bracket
+        ret.push_back(CodeChunk::new(
+            "}".to_string(),
+            code_generation_state.indent,
+            1usize,
+        ));
+
+        ret
+    }
+}
+
+#[derive(Clone, Debug)]
+pub enum FieldBaseType {
+    I8,
+}
+
+#[derive(Clone, Debug)]
+pub struct MessageStructMember {
+    pub name: std::string::String,
+    pub field_base_type: FieldBaseType,
+
+    /// If 0, it is considered just a field
+    pub array_length: usize,
+}
+
+impl codegen::CodeGeneration for MessageStructMember {
+    fn generate_code(
+        &self,
+        code_generation_state: &mut codegen::CodeGenerationState,
+    ) -> LinkedList<CodeChunk> {
+        let mut ret = LinkedList::<codegen::CodeChunk>::new();
+
+        // Get a formatted C representation
+        let formatted = format!(
+            "{0} {1}{2};",
+            match self.field_base_type {
+                FieldBaseType::I8 => {
+                    "uint8_t"
+                }
+                _ => {
+                    panic!("Unsupported type {:?}", self.field_base_type)
+                }
+            },
+            self.name,
+            {
+                if self.array_length == 0usize {
+                    std::string::String::from("")
+                } else {
+                    format!("[{}]", self.array_length)
+                }
+            }
+        );
+
+        ret.push_back(CodeChunk::new(
+            formatted,
+            code_generation_state.indent,
+            1usize,
+        ));
+
+        ret
+    }
+}
+
+impl MessageStructMember {
+    pub fn is_array(&self) -> bool {
+        self.array_length > 0
+    }
+}
+
+#[derive(Clone, Debug)]
+struct ParserStateStruct {
+    machine_name: String,
+}
+
+impl codegen::CodeGeneration for ParserStateStruct {
+    fn generate_code(
+        &self,
+        code_generation_state: &mut codegen::CodeGenerationState,
+    ) -> LinkedList<codegen::CodeChunk> {
+        let mut ret = LinkedList::<codegen::CodeChunk>::new();
+        ret.push_back(CodeChunk::new(
+            format!("struct {0}ParserState {{", self.machine_name),
+            code_generation_state.indent,
+            1usize,
+        ));
+        ret.push_back(CodeChunk::new(
+            "int machineInitRequired;".to_string(),
+            code_generation_state.indent,
+            1usize,
+        ));
+        ret.push_back(CodeChunk::new(
+            "int cs;".to_string(),
+            code_generation_state.indent,
+            1usize,
+        ));
+        ret.push_back(CodeChunk::new(
+            "};".to_string(),
+            code_generation_state.indent,
+            1usize,
+        ));
+
+        ret
+    }
+}
+
+pub struct ParserStateInitFunction {
+    pub machine_name: String,
+}
+
+impl codegen::CodeGeneration for ParserStateInitFunction {
+    fn generate_code(
+        &self,
+        code_generation_state: &mut codegen::CodeGenerationState,
+    ) -> LinkedList<CodeChunk> {
+        let mut ret = LinkedList::<codegen::CodeChunk>::new();
+        ret.push_back(CodeChunk::new(
+            format!(
+                "void machine{0}ParserStateInit(struct {0}ParserState *aParserState)",
+                self.machine_name
+            ),
+            code_generation_state.indent,
+            1usize,
+        ));
+        ret.push_back(CodeChunk::new(
+            "{".to_string(),
+            code_generation_state.indent,
+            1usize,
+        ));
+        code_generation_state.indent += 1usize;
+        ret.push_back(CodeChunk::new(
+            "aParserState->machineInitRequired = 0;".to_string(),
+            code_generation_state.indent,
+            1usize,
+        ));
+        ret.push_back(CodeChunk::new(
+            "aParserState->cs = 0;".to_string(),
+            code_generation_state.indent,
+            1usize,
+        ));
+        ret.push_back(CodeChunk::new(
+            "%% write init;".to_string(),
+            code_generation_state.indent,
+            1usize,
+        ));
+        code_generation_state.indent -= 1usize;
+        ret.push_back(CodeChunk::new(
+            "}".to_string(),
+            code_generation_state.indent,
+            1usize,
+        ));
+
+        ret
+    }
+}
+
+enum AstNodeType {
+    ParsingFunction(ParsingFunciton),
+    ParserStateStruct(ParserStateStruct),
+    ParserStateInitFunction(ParserStateInitFunction),
+    MessageStruct(MessageStruct),
+    MessageStructMember(MessageStructMember),
+}
+
+impl codegen::CodeGeneration for ParsingFunciton {
+    fn generate_code(
+        &self,
+        code_generation_state: &mut codegen::CodeGenerationState,
+    ) -> LinkedList<codegen::CodeChunk> {
+        let mut ret = LinkedList::<codegen::CodeChunk>::new();
+        ret.push_back(codegen::CodeChunk::new(
+            format!("void parse{0}(struct {0}ParserState *aParserState, const char *aInputBuffer, int aInputBufferLength, struct {0} *a{0})", self.message_name),
+            code_generation_state.indent,
+            1usize
+        ));
+        ret.push_back(codegen::CodeChunk::new(
+            "{".to_string(),
+            code_generation_state.indent,
+            1usize,
+        ));
+        code_generation_state.indent += 1usize;
+        ret.push_back(codegen::CodeChunk::new(
+            "const char *p = aInputBuffer;  // Iterator \"begin\" pointer -- Ragel-specific variable for C code generation".to_string(),
+            code_generation_state.indent,
+            1usize,
+        ));
+        ret.push_back(codegen::CodeChunk::new(
+            "const char *pe = aInputBuffer + aInputBufferLength;  // Iterator \"end\" pointer -- Ragel-specific variable for C code generation".to_string(),
+            code_generation_state.indent,
+            1usize,
+        ));
+        ret.push_back(codegen::CodeChunk::new(
+            "// Parse starting from the state defined in `aParserState`".to_string(),
+            code_generation_state.indent,
+            1usize,
+        ));
+        ret.push_back(codegen::CodeChunk::new(
+            "%% write exec;".to_string(),
+            code_generation_state.indent,
+            1usize,
+        ));
+        code_generation_state.indent -= 1usize;
+        ret.push_back(codegen::CodeChunk::new(
+            "}".to_string(),
+            code_generation_state.indent,
+            1usize,
+        ));
+
+        ret
+    }
+}
+
+struct AstNode {
+    ast_node_type: AstNodeType,
+    children: Vec<AstNode>,
 }
 
 /// C-specific Ragel AST
