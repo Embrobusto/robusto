@@ -1,6 +1,7 @@
 use crate::bpir::representation::Message;
 /// Generates C code from procedural representation
 use crate::parser_generation;
+use crate::parser_generation::ragel::common;
 use crate::utility;
 use crate::utility::codegen;
 use crate::utility::codegen::CodeChunk;
@@ -10,8 +11,6 @@ use std;
 use std::collections::LinkedList;
 use std::string::String;
 use std::vec::Vec;
-
-use super::common;
 
 #[derive(Debug)]
 struct GenerationState {
