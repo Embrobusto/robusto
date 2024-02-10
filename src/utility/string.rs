@@ -1,6 +1,19 @@
 use std::io::Write;
+use std::string::String;
 
-const NEWLINE: &'static str = "\n";
+pub const NEWLINE: &'static str = "\n";
+pub const INDENT: &'static str = "    ";
+
+pub fn make_indent(indent: usize) -> String {
+    use std::fmt::Write;
+    let mut ret = String::with_capacity(INDENT.len());
+
+    for i in 0..indent {
+        write!(&mut ret, "{}", INDENT);
+    }
+
+    ret
+}
 
 pub fn append_indent_or_panic<T: std::fmt::Write>(
     sink: &mut T,
