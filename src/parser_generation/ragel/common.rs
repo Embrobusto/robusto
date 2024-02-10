@@ -1,15 +1,8 @@
-use crate::parser_generation;
 use crate::utility::codegen::{CodeChunk, CodeGeneration, CodeGenerationState};
-use crate::{
-    bpir::{
-        self,
-        representation::{
-            self, Field, FieldAttribute, FieldType, MaxLengthFieldAttribute, RegexFieldType,
-        },
-    },
-    utility,
-};
+use crate::bpir::representation::{FieldAttribute, FieldType};
+use crate::bpir;
 use log;
+
 /// Generates an AST-like tree of patterns common for languages supporting
 /// procedural paradigm (Rust 2018, and ANSI C at this point).
 ///
@@ -20,10 +13,8 @@ use log;
 /// - Support for functions;
 /// - Support for mutable pointers or similar entities;
 pub use std;
-use std::collections::{linked_list, LinkedList};
-use std::io::BufWriter;
+use std::collections::LinkedList;
 use std::string::String;
-use std::{boxed::Box, io::LineWriter};
 
 /// Represents an abstract syntactic tree for Ragel code, with the difference
 /// that its leaves mostly consist of snippets rather than atomic language
@@ -275,7 +266,7 @@ impl AstNode {
                     }
 
                     if value == 0usize {
-                        value = representation::MaxLengthFieldAttribute::get_default_value();
+                        value = bpir::representation::MaxLengthFieldAttribute::get_default_value();
 
                         log::warn!(
                             "Did not get \"MaxLength\" attribute for field \"{}\" in message \"{}\", using default \"{}\"",
