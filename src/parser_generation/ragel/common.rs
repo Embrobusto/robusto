@@ -1,3 +1,4 @@
+use crate::parser_generation;
 use crate::utility::codegen::{CodeChunk, CodeGeneration, CodeGenerationState};
 use crate::{
     bpir::{
@@ -90,7 +91,7 @@ pub struct MachineActionHook {
 }
 
 #[derive(Debug)]
-pub enum Ast {
+pub enum AstNodeType {
     /// An empty representation for a subtre
     None,
 
@@ -206,33 +207,24 @@ impl CodeGeneration for RegexMachineField {
     }
 }
 
-trait AsCode {
-    fn as_code(_ast: &Ast) -> Option<String> {
-        None
-    }
-}
-
 #[derive(Debug)]
 pub struct AstNode {
-    pub ast_node_type: Ast,
+    pub ast_node_type: AstNodeType,
     pub children: std::vec::Vec<AstNode>,
 }
 
-impl Into<Ast> for AstNode {
-    fn into(self) -> Ast {
-        self.ast_node_type
-    }
-}
+impl From<& bpir::representation::Protocol> for AstNode {
+    fn from(protocol: &bpir::representation::Protocol) -> Self {
+        let mut root = AstNode {
+            ast_node_type: AstNodeType::None,
+            children: vec![],
+        };
 
-impl AsRef<Ast> for AstNode {
-    fn as_ref(&self) -> &Ast {
-        &self.ast_node_type
-    }
-}
+        for message in &protocol.messages {
+            root.add_message_parser(message);
+        }
 
-impl AsMut<Ast> for AstNode {
-    fn as_mut(&mut self) -> &mut Ast {
-        &mut self.ast_node_type
+        root
     }
 }
 
@@ -241,7 +233,7 @@ impl AsMut<Ast> for AstNode {
 impl AstNode {
     pub fn from_protocol(protocol: &bpir::representation::Protocol) -> AstNode {
         let mut root = AstNode {
-            ast_node_type: Ast::None,
+            ast_node_type: AstNodeType::None,
             children: vec![],
         };
 
@@ -253,7 +245,7 @@ impl AstNode {
     }
 
     /// Adds a new child to a node. Returns reference to the new child
-    fn add_child(&mut self, ast_node_type: Ast) -> &mut AstNode {
+    fn add_child(&mut self, ast_node_type: AstNodeType) -> &mut AstNode {
         let child = AstNode {
             ast_node_type,
             children: vec![],
@@ -263,15 +255,15 @@ impl AstNode {
     }
 
     fn add_message_parser(&mut self, message: &bpir::representation::Message) {
-        self.add_child(Ast::MachineHeader(MachineHeader {
+        self.add_child(AstNodeType::MachineHeader(MachineHeader {
             machine_name: message.name.clone(),
         }));
-        let mut message_struct = self.add_child(Ast::MessageStruct(MessageStruct {
+        let mut message_struct = self.add_child(AstNodeType::MessageStruct(MessageStruct {
             message_name: message.name.clone(),
         }));
 
         for field in &message.fields {
-            message_struct.add_child(Ast::MessageStructMember(MessageStructMember {
+            message_struct.add_child(AstNodeType::MessageStructMember(MessageStructMember {
                 name: field.name.clone(),
                 field_base_type: match field.field_type {
                     FieldType::Regex(_) => FieldBaseType::I8,
@@ -306,7 +298,7 @@ impl AstNode {
         }
 
         let mut machine_definition_node =
-            self.add_child(Ast::MachineDefinition(MachineDefinition {
+            self.add_child(AstNodeType::MachineDefinition(MachineDefinition {
                 machine_name: message.name.clone(),
                 fields: message.fields.iter().map(|f| f.name.clone()).collect(),
             }));
@@ -319,7 +311,7 @@ impl AstNode {
             machine_definition_node.add_machine_field_parser(field);
         }
 
-        let mut parsing_function = self.add_child(Ast::ParsingFunction(ParsingFunction {
+        let mut parsing_function = self.add_child(AstNodeType::ParsingFunction(ParsingFunction {
             message_name: message.name.clone(),
         }));
 
@@ -327,7 +319,7 @@ impl AstNode {
     }
 
     fn add_machine_action_hook(&mut self, field: &bpir::representation::Field) {
-        self.add_child(Ast::MachineActionHook(MachineActionHook {
+        self.add_child(AstNodeType::MachineActionHook(MachineActionHook {
             name: field.name.clone(),
         }));
     }
@@ -348,7 +340,7 @@ impl AstNode {
         field: &bpir::representation::Field,
         regex: &bpir::representation::RegexFieldType,
     ) {
-        self.add_child(Ast::RegexMachineField(RegexMachineField {
+        self.add_child(AstNodeType::RegexMachineField(RegexMachineField {
             string_sequence: regex.regex.clone(),
             name: field.name.clone(),
         }));

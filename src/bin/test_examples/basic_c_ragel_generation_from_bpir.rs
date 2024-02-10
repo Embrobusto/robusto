@@ -44,7 +44,8 @@ fn main() {
     // Run Ragel code generation
     let file = std::fs::File::create(OUTPUT_FILE_NAME).unwrap();
     let mut buf_writer = std::io::BufWriter::new(file);
-    let ast = robusto::parser_generation::ragel::common::AstNode::from_protocol(&protocol);
+    // let ast = robusto::parser_generation::ragel::common::AstNode::from_protocol(&protocol);
+    let ast = robusto::parser_generation::ragel::common::AstNode::from(&protocol);
     let c_generator = robusto::parser_generation::ragel::c::Generator::from_ragel_ast(&ast);
     c_generator.write(&mut buf_writer);
 }

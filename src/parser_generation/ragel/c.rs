@@ -53,29 +53,29 @@ impl Generator<'_> {
         generation_state: &mut GenerationState,
     ) {
         match ast_node.ast_node_type {
-            parser_generation::ragel::common::Ast::MachineHeader(ref node) => self
+            parser_generation::ragel::common::AstNodeType::MachineHeader(ref node) => self
                 .generate_machine_header(
                     ast_node,
                     buf_writer,
                     &node.machine_name,
                     generation_state,
                 ),
-            parser_generation::ragel::common::Ast::MachineDefinition(ref node) => {
+            parser_generation::ragel::common::AstNodeType::MachineDefinition(ref node) => {
                 self.generate_machine_definition(ast_node, buf_writer, &node, generation_state);
             }
-            parser_generation::ragel::common::Ast::None => {
+            parser_generation::ragel::common::AstNodeType::None => {
                 self.generate_traverse_ast_node_children(ast_node, buf_writer, generation_state);
             }
-            parser_generation::ragel::common::Ast::ParsingFunction(ref node) => {
+            parser_generation::ragel::common::AstNodeType::ParsingFunction(ref node) => {
                 self.generate_parsing_function(ast_node, buf_writer, &node, generation_state);
             }
-            parser_generation::ragel::common::Ast::MessageStruct(ref node) => {
+            parser_generation::ragel::common::AstNodeType::MessageStruct(ref node) => {
                 self.generate_message_struct(ast_node, buf_writer, &node, generation_state);
             }
-            parser_generation::ragel::common::Ast::MessageStructMember(ref node) => {
+            parser_generation::ragel::common::AstNodeType::MessageStructMember(ref node) => {
                 self.generate_message_struct_member(ast_node, buf_writer, node, generation_state);
             }
-            parser_generation::ragel::common::Ast::RegexMachineField(ref node) => {
+            parser_generation::ragel::common::AstNodeType::RegexMachineField(ref node) => {
                 self.generate_regex_machine_field_parser(
                     ast_node,
                     buf_writer,
@@ -83,7 +83,7 @@ impl Generator<'_> {
                     generation_state,
                 );
             }
-            parser_generation::ragel::common::Ast::MachineActionHook(ref node) => {
+            parser_generation::ragel::common::AstNodeType::MachineActionHook(ref node) => {
                 self.generate_machine_action_hook(ast_node, buf_writer, node, generation_state);
             }
             _ => {
