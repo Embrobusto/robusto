@@ -10,7 +10,7 @@ use std::fmt::write;
 use std::io::Write;
 use std::str::FromStr;
 
-use super::common::MessageStructMemberAstNode;
+use super::common::MessageStructMember;
 
 const NEWLINE: &'static str = "\n";
 
@@ -133,7 +133,7 @@ void machine{machine_name}ParserStateInit(struct {machine_name}ParserState *aPar
         &self,
         ast_node: &parser_generation::ragel::common::AstNode,
         buf_writer: &mut std::io::BufWriter<W>,
-        node: &parser_generation::ragel::common::MachineDefinitionAstNode,
+        node: &parser_generation::ragel::common::MachineDefinition,
         generation_state: &mut GenerationState,
     ) {
         utility::string::write_with_indent_or_panic(
@@ -174,7 +174,7 @@ void machine{machine_name}ParserStateInit(struct {machine_name}ParserState *aPar
         &self,
         ast_node: &parser_generation::ragel::common::AstNode,
         buf_writer: &mut std::io::BufWriter<W>,
-        node: &parser_generation::ragel::common::ParsingFunctionAstNode,
+        node: &parser_generation::ragel::common::ParsingFunction,
         generation_state: &mut GenerationState,
     ) {
         // Generate ragel parsing function state
@@ -214,7 +214,7 @@ const char *pe = aInputBuffer + aInputBufferLength;  // Iterator \"end\" pointer
         &self,
         ast_node: &parser_generation::ragel::common::AstNode,
         buf_writer: &mut std::io::BufWriter<W>,
-        node: &parser_generation::ragel::common::MessageStructAstNode,
+        node: &parser_generation::ragel::common::MessageStruct,
         generation_state: &mut GenerationState,
     ) {
         utility::string::write_line_with_indent_or_panic(
@@ -236,7 +236,7 @@ const char *pe = aInputBuffer + aInputBufferLength;  // Iterator \"end\" pointer
         &self,
         ast_node: &parser_generation::ragel::common::AstNode,
         buf_writer: &mut std::io::BufWriter<W>,
-        node: &parser_generation::ragel::common::MessageStructMemberAstNode,
+        node: &parser_generation::ragel::common::MessageStructMember,
         generation_state: &mut GenerationState,
     ) {
         let formatted = format!(
@@ -269,7 +269,7 @@ const char *pe = aInputBuffer + aInputBufferLength;  // Iterator \"end\" pointer
         &self,
         ast_node: &parser_generation::ragel::common::AstNode,
         buf_writer: &mut std::io::BufWriter<W>,
-        node: &parser_generation::ragel::common::MachineActionHookAstNode,
+        node: &parser_generation::ragel::common::MachineActionHook,
         generation_state: &mut GenerationState,
     ) {
         utility::string::write_with_indent_or_panic(
@@ -289,7 +289,7 @@ const char *pe = aInputBuffer + aInputBufferLength;  // Iterator \"end\" pointer
         &self,
         ast_node: &parser_generation::ragel::common::AstNode,
         buf_writer: &mut std::io::BufWriter<W>,
-        node: &parser_generation::ragel::common::RegexMachineFieldAstNode,
+        node: &parser_generation::ragel::common::RegexMachineField,
         generation_state: &mut GenerationState,
     ) {
         utility::string::write_line_with_indent_or_panic(
