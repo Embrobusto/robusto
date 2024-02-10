@@ -1,3 +1,4 @@
+use crate::utility::codegen::{CodeChunk, CodeGeneration, CodeGenerationState};
 use crate::{
     bpir::{
         self,
@@ -109,99 +110,97 @@ pub enum Ast {
     RegexMachineField(RegexMachineField),
 }
 
-struct CodeGenerationState {
-    // Current indent.
-    indent: usize,
-}
-
-impl CodeGenerationState {
-    fn new() -> CodeGenerationState {
-        CodeGenerationState { indent: 0 }
-    }
-}
-
-struct CodeChunk {
-    code: String,
-
-    /// Indents in the code chunk's lines
-    indent: usize,
-
-    /// Number of new lines to add after the chunk
-    newlines: usize,
-}
-
-impl CodeChunk {
-    fn new(code: String, indent: usize, newlines: usize) -> CodeChunk {
-        CodeChunk { code, indent, newlines }
-    }
-}
-
-/// Generates a series of code chunks which can just be dumped as-is into
-/// whatever output is used, e.g. file stream
-trait CodeGeneration {
-    fn generate_code(
-        &self,
-        ast_node: &AstNode,
-        generation_state: &mut CodeGenerationState,
-    ) -> LinkedList<CodeChunk>;
-}
-
-
-/// Orchestrated code generation for Ragel. Platform-dependent code generation
-/// is delegated to `target_code_generation`
-struct RagelCodeGeneration<'a> {
-    /// Handles all the code
-    common_code_generation: CommonCodeGeneration,
-    target_code_generation: &'a dyn CodeGeneration,
-}
-
-struct CommonCodeGeneration {
-}
-
-impl CommonCodeGeneration {
-    fn generate_machine_header(
-        &self,
-        ast_node: &AstNode,
-        machine_header: &MachineHeader,
-        generation_state: &mut CodeGenerationState,
-    ) -> LinkedList<CodeChunk> {
-        // Generate the representation
+impl CodeGeneration for MachineHeader {
+    fn generate_code(&self, generation_state: &mut CodeGenerationState) -> LinkedList<CodeChunk> {
         let mut ret = LinkedList::<CodeChunk>::new();
-        ret.push_back(CodeChunk::new("%%{".to_string(), generation_state.indent, 1usize));
-        ret.push_back(CodeChunk::new(format!("machine {0};", machine_header.machine_name),
-            generation_state.indent + 1, 1usize));
-        ret.push_back(CodeChunk::new("write data;".to_string(), generation_state.indent + 1, 1usize));
-        ret.push_back(CodeChunk::new("}%%".to_string(), generation_state.indent, 1usize));
-
-//         utility::string::append_with_indent_or_panic(&mut sink, generation_state.indent, format!(
-// "
-// // TODO: parser state struct
-// struct {machine_name}ParserState {{
-//     int machineInitRequired;
-//     int cs;  // Ragel-specific state variable
-// }};
-
-// // TODO: parser state initialization function
-// void machine{machine_name}ParserStateInit(struct {machine_name}ParserState *aParserState)
-// {{
-//     aParserState->machineInitRequired = 0;
-//     aParserState->cs = 0;
-//     %% write init;
-// }}
-// "
-//         ).as_bytes());
+        ret.push_back(CodeChunk::new(
+            "%%{".to_string(),
+            generation_state.indent,
+            1usize,
+        ));
+        ret.push_back(CodeChunk::new(
+            format!("machine {0};", self.machine_name),
+            generation_state.indent + 1,
+            1usize,
+        ));
+        ret.push_back(CodeChunk::new(
+            "write data;".to_string(),
+            generation_state.indent + 1,
+            1usize,
+        ));
+        ret.push_back(CodeChunk::new(
+            "}%%".to_string(),
+            generation_state.indent,
+            1usize,
+        ));
 
         ret
     }
+}
 
-    fn generate_regex_machine_field_parser<W: std::io::Write>(
+impl CodeGeneration for MachineActionHook {
+    fn generate_code(
         &self,
-        ast_node: &AstNode,
-        node: &RegexMachineField,
-        generation_state: &mut CodeGenerationState,
+        code_generation_state: &mut CodeGenerationState,
     ) -> LinkedList<CodeChunk> {
         let mut ret = LinkedList::<CodeChunk>::new();
-        ret.push_back(CodeChunk::new(format!("{0} = '{1}' @{0}; ", node.name, node.string_sequence), generation_state.indent, 1usize));
+        ret.push_back(CodeChunk::new(
+            format!("action {0} {{", self.name),
+            code_generation_state.indent,
+            1usize,
+        ));
+        ret.push_back(CodeChunk::new(
+            "}".to_string(),
+            code_generation_state.indent,
+            1usize,
+        ));
+
+        ret
+    }
+}
+
+impl CodeGeneration for MachineDefinition {
+    fn generate_code(
+        &self,
+        code_generation_state: &mut CodeGenerationState,
+    ) -> LinkedList<CodeChunk> {
+        let mut ret = LinkedList::<CodeChunk>::new();
+        ret.push_back(CodeChunk::new(
+            "%%{".to_string(),
+            code_generation_state.indent,
+            1usize,
+        ));
+        ret.push_back(CodeChunk::new(
+            format!("machine {0}", self.machine_name),
+            code_generation_state.indent + 1,
+            1usize,
+        ));
+        ret.push_back(CodeChunk::new(
+            "write data;".to_string(),
+            code_generation_state.indent + 1,
+            1usize,
+        ));
+        ret.push_back(CodeChunk::new(
+            "}%%".to_string(),
+            code_generation_state.indent,
+            1usize,
+        ));
+
+        ret
+    }
+}
+
+impl CodeGeneration for RegexMachineField {
+    fn generate_code(
+        &self,
+        code_generation_state: &mut CodeGenerationState,
+    ) -> LinkedList<CodeChunk> {
+        let mut ret = LinkedList::<CodeChunk>::new();
+        ret.push_back(CodeChunk::new(
+            format!("{0} = '{1}' @{0}; ", self.name, self.string_sequence),
+            code_generation_state.indent,
+            1usize,
+        ));
 
         ret
     }
