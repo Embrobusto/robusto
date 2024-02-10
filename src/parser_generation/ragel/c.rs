@@ -1,16 +1,8 @@
 /// Generates C code from procedural representation
-use crate::bpir;
-use crate::bpir::representation;
-use crate::bpir::representation::RegexFieldType;
 use crate::parser_generation;
 use crate::utility;
 use log;
 use std;
-use std::fmt::write;
-use std::io::Write;
-use std::str::FromStr;
-
-use super::common::MessageStructMember;
 
 const NEWLINE: &'static str = "\n";
 
