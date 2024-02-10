@@ -58,12 +58,6 @@ pub struct MessageStruct {
     pub message_name: std::string::String,
 }
 
-#[derive(Debug)]
-pub struct GenericStruct {
-    pub name: std::string::String,
-    pub members: Vec<MessageStructMember>,
-}
-
 #[derive(Clone, Debug)]
 pub enum FieldBaseType {
     I8,
@@ -101,7 +95,6 @@ pub enum AstNodeType {
     /// Just treat it as a mere sequence
     MessageStructMember(MessageStructMember),
     MessageStruct(MessageStruct),
-    GenericStruct(GenericStruct),
     ParsingFunction(ParsingFunction),
 
     /// Ragel-specific machine header
