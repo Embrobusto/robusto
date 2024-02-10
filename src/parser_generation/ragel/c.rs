@@ -10,6 +10,8 @@ use std::collections::LinkedList;
 use std::string::String;
 use std::vec::Vec;
 
+use super::common;
+
 struct GenerationState {
     // Current indent.
     indent: usize,
@@ -220,14 +222,6 @@ impl codegen::CodeGeneration for ParserStateInitFunction {
     }
 }
 
-enum AstNodeType {
-    ParsingFunction(ParsingFunciton),
-    ParserStateStruct(ParserStateStruct),
-    ParserStateInitFunction(ParserStateInitFunction),
-    MessageStruct(MessageStruct),
-    MessageStructMember(MessageStructMember),
-}
-
 impl codegen::CodeGeneration for ParsingFunciton {
     fn generate_code(
         &self,
@@ -274,6 +268,15 @@ impl codegen::CodeGeneration for ParsingFunciton {
 
         ret
     }
+}
+
+enum AstNodeType {
+    ParsingFunction(ParsingFunciton),
+    ParserStateStruct(ParserStateStruct),
+    ParserStateInitFunction(ParserStateInitFunction),
+    MessageStruct(MessageStruct),
+    MessageStructMember(MessageStructMember),
+    Common(common::AstNodeType),
 }
 
 struct AstNode {
