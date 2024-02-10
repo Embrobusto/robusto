@@ -306,7 +306,7 @@ impl AstNode {
 }
 
 /// AST tree for generating C source files
-struct SourceAstNode {
+pub struct SourceAstNode {
     ast_node: AstNode,
 }
 
@@ -317,13 +317,11 @@ impl From<&Protocol> for SourceAstNode {
             ast_node: AstNode::new(),
         };
 
-        // TODO: build the tree
-
         ret
     }
 }
 
-struct HeaderAstNode {
+pub struct HeaderAstNode {
     ast_node: AstNode,
 }
 
