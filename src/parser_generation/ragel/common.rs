@@ -18,41 +18,48 @@ use log;
 /// - Support for functions;
 /// - Support for mutable pointers or similar entities;
 pub use std;
-use std::boxed::Box;
+use std::collections::{linked_list, LinkedList};
 use std::io::BufWriter;
 use std::string::String;
+use std::{boxed::Box, io::LineWriter};
 
 /// Represents an abstract syntactic tree for Ragel code, with the difference
 /// that its leaves mostly consist of snippets rather than atomic language
 /// constructs, i.e. it is a less detailed representation of Ragel code.
 ///
 #[derive(Debug)]
-pub struct ParsingFunctionAstNode {
+pub struct ParsingFunction {
     /// Each parsing function is supposed to be associated w/ a particular message
     pub message_name: std::string::String,
 }
 
 #[derive(Debug)]
-pub struct RegexMachineFieldAstNode {
+pub struct RegexMachineField {
     /// Ragel machine string sequence (definition)
     pub string_sequence: std::string::String,
     pub name: std::string::String,
 }
 
 #[derive(Debug)]
-pub struct MachineHeaderAstNode {
+pub struct MachineHeader {
     pub machine_name: std::string::String,
 }
 
 #[derive(Debug)]
-pub struct MachineDefinitionAstNode {
+pub struct MachineDefinition {
     pub machine_name: std::string::String,
     pub fields: std::vec::Vec<String>,
 }
 
 #[derive(Debug)]
-pub struct MessageStructAstNode {
+pub struct MessageStruct {
     pub message_name: std::string::String,
+}
+
+#[derive(Debug)]
+pub struct GenericStruct {
+    pub name: std::string::String,
+    pub members: Vec<MessageStructMember>,
 }
 
 #[derive(Clone, Debug)]
@@ -61,7 +68,7 @@ pub enum FieldBaseType {
 }
 
 #[derive(Clone, Debug)]
-pub struct MessageStructMemberAstNode {
+pub struct MessageStructMember {
     pub name: std::string::String,
     pub field_base_type: FieldBaseType,
 
@@ -69,34 +76,37 @@ pub struct MessageStructMemberAstNode {
     pub array_length: usize,
 }
 
-impl MessageStructMemberAstNode {
+impl MessageStructMember {
     pub fn is_array(&self) -> bool {
         self.array_length > 0
     }
 }
 
 #[derive(Clone, Debug)]
-pub struct MachineActionHookAstNode {
+pub struct MachineActionHook {
     /// Coincides w/ the field's name
     pub name: std::string::String,
 }
 
 #[derive(Debug)]
 pub enum Ast {
+    /// An empty representation for a subtre
+    None,
+
     // C-specific elements (TBD)
 
     // Language-agnostic elements
     /// Just treat it as a mere sequence
-    None,
-    MessageStructMember(MessageStructMemberAstNode),
+    MessageStructMember(MessageStructMember),
+    MessageStruct(MessageStruct),
+    GenericStruct(GenericStruct),
+    ParsingFunction(ParsingFunction),
 
     /// Ragel-specific machine header
-    MachineHeader(MachineHeaderAstNode),
-    MachineActionHook(MachineActionHookAstNode),
-    MessageStruct(MessageStructAstNode),
-    MachineDefinition(MachineDefinitionAstNode),
-    ParsingFunction(ParsingFunctionAstNode),
-    RegexMachineField(RegexMachineFieldAstNode),
+    MachineHeader(MachineHeader),
+    MachineActionHook(MachineActionHook),
+    MachineDefinition(MachineDefinition),
+    RegexMachineField(RegexMachineField),
 }
 
 struct CodeGenerationState {
@@ -110,277 +120,90 @@ impl CodeGenerationState {
     }
 }
 
-pub struct CodeGeneration<'a> {
-    ast: &'a AstNode,
+struct CodeChunk {
+    code: String,
+
+    /// Indents in the code chunk's lines
+    indent: usize,
+
+    /// Number of new lines to add after the chunk
+    newlines: usize,
 }
 
-impl CodeGeneration<'_> {
-    pub fn from_ragel_ast(ast_node: &AstNode) -> CodeGeneration {
-        CodeGeneration { ast: ast_node }
+impl CodeChunk {
+    fn new(code: String, indent: usize, newlines: usize) -> CodeChunk {
+        CodeChunk { code, indent, newlines }
     }
+}
 
-    fn generate_traverse_ast_node_children<W: std::io::Write>(
+/// Generates a series of code chunks which can just be dumped as-is into
+/// whatever output is used, e.g. file stream
+trait CodeGeneration {
+    fn generate_code(
         &self,
         ast_node: &AstNode,
-        buf_writer: &mut std::io::BufWriter<W>,
         generation_state: &mut CodeGenerationState,
-    ) {
-        for child in &ast_node.children {
-            self.generate_traverse_ast_node(child, buf_writer, generation_state);
-        }
-    }
+    ) -> LinkedList<CodeChunk>;
+}
 
-    fn generate_traverse_ast_node<W: std::io::Write>(
+
+/// Orchestrated code generation for Ragel. Platform-dependent code generation
+/// is delegated to `target_code_generation`
+struct RagelCodeGeneration<'a> {
+    /// Handles all the code
+    common_code_generation: CommonCodeGeneration,
+    target_code_generation: &'a dyn CodeGeneration,
+}
+
+struct CommonCodeGeneration {
+}
+
+impl CommonCodeGeneration {
+    fn generate_machine_header(
         &self,
         ast_node: &AstNode,
-        buf_writer: &mut std::io::BufWriter<W>,
+        machine_header: &MachineHeader,
         generation_state: &mut CodeGenerationState,
-    ) {
-        match ast_node.ast_node_type {
-            Ast::MachineHeader(ref node) => self
-                .generate_machine_header(
-                    ast_node,
-                    buf_writer,
-                    &node.machine_name,
-                    generation_state,
-                ),
-            Ast::MachineDefinition(ref node) => {
-                self.generate_machine_definition(ast_node, buf_writer, &node, generation_state);
-            }
-            Ast::None => {
-                self.generate_traverse_ast_node_children(ast_node, buf_writer, generation_state);
-            }
-            Ast::ParsingFunction(ref node) => {
-                self.generate_parsing_function(ast_node, buf_writer, &node, generation_state);
-            }
-            Ast::MessageStruct(ref node) => {
-                self.generate_message_struct(ast_node, buf_writer, &node, generation_state);
-            }
-            Ast::MessageStructMember(ref node) => {
-                self.generate_message_struct_member(ast_node, buf_writer, node, generation_state);
-            }
-            Ast::RegexMachineField(ref node) => {
-                self.generate_regex_machine_field_parser(
-                    ast_node,
-                    buf_writer,
-                    node,
-                    generation_state,
-                );
-            }
-            Ast::MachineActionHook(ref node) => {
-                self.generate_machine_action_hook(ast_node, buf_writer, node, generation_state);
-            }
-            _ => {
-                log::error!(
-                    "Unmatched node \"{:?}\", panicking!",
-                    ast_node.ast_node_type
-                );
-                panic!();
-            }
-        }
-    }
+    ) -> LinkedList<CodeChunk> {
+        // Generate the representation
+        let mut ret = LinkedList::<CodeChunk>::new();
+        ret.push_back(CodeChunk::new("%%{".to_string(), generation_state.indent, 1usize));
+        ret.push_back(CodeChunk::new(format!("machine {0};", machine_header.machine_name),
+            generation_state.indent + 1, 1usize));
+        ret.push_back(CodeChunk::new("write data;".to_string(), generation_state.indent + 1, 1usize));
+        ret.push_back(CodeChunk::new("}%%".to_string(), generation_state.indent, 1usize));
 
-    fn generate_machine_header<W: std::io::Write>(
-        &self,
-        ast_node: &AstNode,
-        buf_writer: &mut std::io::BufWriter<W>,
-        machine_name: &std::string::String,
-        generation_state: &mut CodeGenerationState,
-    ) {
-        utility::string::write_with_indent_or_panic(
-            buf_writer,
-            generation_state.indent,
-            format!(
-                "%%{{
-    machine {machine_name};
-    write data;
-}}%%
+//         utility::string::append_with_indent_or_panic(&mut sink, generation_state.indent, format!(
+// "
+// // TODO: parser state struct
+// struct {machine_name}ParserState {{
+//     int machineInitRequired;
+//     int cs;  // Ragel-specific state variable
+// }};
 
-struct {machine_name}ParserState {{
-    int machineInitRequired;
-    int cs;  // Ragel-specific state variable
-}};
+// // TODO: parser state initialization function
+// void machine{machine_name}ParserStateInit(struct {machine_name}ParserState *aParserState)
+// {{
+//     aParserState->machineInitRequired = 0;
+//     aParserState->cs = 0;
+//     %% write init;
+// }}
+// "
+//         ).as_bytes());
 
-void machine{machine_name}ParserStateInit(struct {machine_name}ParserState *aParserState)
-{{
-    aParserState->machineInitRequired = 0;
-    aParserState->cs = 0;
-    %% write init;
-}}
-"
-            )
-            .as_bytes(),
-        );
-    }
-
-    fn generate_machine_definition<W: std::io::Write>(
-        &self,
-        ast_node: &AstNode,
-        buf_writer: &mut std::io::BufWriter<W>,
-        node: &MachineDefinitionAstNode,
-        generation_state: &mut CodeGenerationState,
-    ) {
-        utility::string::write_with_indent_or_panic(
-            buf_writer,
-            generation_state.indent,
-            format!(
-                "%%{{
-    machine {0};
-    access aParserState->;
-",
-                node.machine_name
-            )
-            .as_bytes(),
-        );
-        generation_state.indent += 1;
-
-        self.generate_traverse_ast_node_children(ast_node, buf_writer, generation_state);
-        utility::string::write_line_with_indent_or_panic(
-            buf_writer,
-            generation_state.indent,
-            format!("main := {0};", node.fields.join(" ")).as_bytes(),
-        );
-
-        generation_state.indent -= 1;
-        utility::string::write_line_with_indent_or_panic(
-            buf_writer,
-            generation_state.indent,
-            "}%%".as_bytes(),
-        );
-        utility::string::write_line_with_indent_or_panic(
-            buf_writer,
-            generation_state.indent,
-            "".as_bytes(),
-        );
-    }
-
-    fn generate_parsing_function<W: std::io::Write>(
-        &self,
-        ast_node: &AstNode,
-        buf_writer: &mut std::io::BufWriter<W>,
-        node: &ParsingFunctionAstNode,
-        generation_state: &mut CodeGenerationState,
-    ) {
-        // Generate ragel parsing function state
-        utility::string::write_line_with_indent_or_panic(
-            buf_writer,
-            generation_state.indent,
-            format!(
-                "void parse{0}(struct {3}ParserState *aParserState, const char *aInputBuffer, int aInputBufferLength, struct {1} *a{2})",
-                node.message_name, node.message_name, node.message_name, node.message_name
-            )
-            .as_bytes(),
-        );
-        utility::string::write_line_with_indent_or_panic(
-            buf_writer,
-            generation_state.indent,
-            "{".as_bytes(),
-        );
-        generation_state.indent += 1;
-        utility::string::write_with_indent_or_panic(buf_writer, generation_state.indent, format!(
-"const char *p = aInputBuffer;  // Iterator \"begin\" pointer -- Ragel-specific variable for C code generation
-const char *pe = aInputBuffer + aInputBufferLength;  // Iterator \"end\" pointer -- Ragel-specific variable for C code generation
-
-// Parse starting from the state defined in `aParserState`
-%% write exec;
-"
-        ).as_bytes());
-        generation_state.indent -= 1;
-        utility::string::write_line_with_indent_or_panic(
-            buf_writer,
-            generation_state.indent,
-            "}".as_bytes(),
-        );
-        self.generate_traverse_ast_node_children(ast_node, buf_writer, generation_state);
-    }
-
-    fn generate_message_struct<W: std::io::Write>(
-        &self,
-        ast_node: &AstNode,
-        buf_writer: &mut std::io::BufWriter<W>,
-        node: &MessageStructAstNode,
-        generation_state: &mut CodeGenerationState,
-    ) {
-        utility::string::write_line_with_indent_or_panic(
-            buf_writer,
-            generation_state.indent,
-            format!("struct {0}Message {{", node.message_name).as_bytes(),
-        );
-        generation_state.indent += 1;
-        self.generate_traverse_ast_node_children(ast_node, buf_writer, generation_state);
-        generation_state.indent -= 1;
-        utility::string::write_line_with_indent_or_panic(
-            buf_writer,
-            generation_state.indent,
-            "};".as_bytes(),
-        );
-    }
-
-    fn generate_message_struct_member<W: std::io::Write>(
-        &self,
-        ast_node: &AstNode,
-        buf_writer: &mut std::io::BufWriter<W>,
-        node: &MessageStructMemberAstNode,
-        generation_state: &mut CodeGenerationState,
-    ) {
-        let formatted = format!(
-            "{0} {1}{2};",
-            match node.field_base_type {
-                FieldBaseType::I8 => {
-                    "uint8_t"
-                }
-                _ => {
-                    panic!("Unsupported type {:?}", node.field_base_type)
-                }
-            },
-            node.name,
-            {
-                if node.array_length == 0usize {
-                    std::string::String::from("")
-                } else {
-                    format!("[{}]", node.array_length)
-                }
-            }
-        );
-        utility::string::write_line_with_indent_or_panic(
-            buf_writer,
-            generation_state.indent,
-            formatted.as_bytes(),
-        );
-    }
-
-    fn generate_machine_action_hook<W: std::io::Write>(
-        &self,
-        ast_node: &AstNode,
-        buf_writer: &mut std::io::BufWriter<W>,
-        node: &MachineActionHookAstNode,
-        generation_state: &mut CodeGenerationState,
-    ) {
-        utility::string::write_with_indent_or_panic(
-            buf_writer,
-            generation_state.indent,
-            format!(
-                "action {0} {{
-}}
-",
-                node.name
-            )
-            .as_bytes(),
-        );
+        ret
     }
 
     fn generate_regex_machine_field_parser<W: std::io::Write>(
         &self,
         ast_node: &AstNode,
-        buf_writer: &mut std::io::BufWriter<W>,
-        node: &RegexMachineFieldAstNode,
+        node: &RegexMachineField,
         generation_state: &mut CodeGenerationState,
-    ) {
-        utility::string::write_line_with_indent_or_panic(
-            buf_writer,
-            generation_state.indent,
-            format!("{0} = '{1}' @{0}; ", node.name, node.string_sequence).as_bytes(),
-        );
+    ) -> LinkedList<CodeChunk> {
+        let mut ret = LinkedList::<CodeChunk>::new();
+        ret.push_back(CodeChunk::new(format!("{0} = '{1}' @{0}; ", node.name, node.string_sequence), generation_state.indent, 1usize));
+
+        ret
     }
 }
 
@@ -441,15 +264,15 @@ impl AstNode {
     }
 
     fn add_message_parser(&mut self, message: &bpir::representation::Message) {
-        self.add_child(Ast::MachineHeader(MachineHeaderAstNode {
+        self.add_child(Ast::MachineHeader(MachineHeader {
             machine_name: message.name.clone(),
         }));
-        let mut message_struct = self.add_child(Ast::MessageStruct(MessageStructAstNode {
+        let mut message_struct = self.add_child(Ast::MessageStruct(MessageStruct {
             message_name: message.name.clone(),
         }));
 
         for field in &message.fields {
-            message_struct.add_child(Ast::MessageStructMember(MessageStructMemberAstNode {
+            message_struct.add_child(Ast::MessageStructMember(MessageStructMember {
                 name: field.name.clone(),
                 field_base_type: match field.field_type {
                     FieldType::Regex(_) => FieldBaseType::I8,
@@ -484,7 +307,7 @@ impl AstNode {
         }
 
         let mut machine_definition_node =
-            self.add_child(Ast::MachineDefinition(MachineDefinitionAstNode {
+            self.add_child(Ast::MachineDefinition(MachineDefinition {
                 machine_name: message.name.clone(),
                 fields: message.fields.iter().map(|f| f.name.clone()).collect(),
             }));
@@ -497,7 +320,7 @@ impl AstNode {
             machine_definition_node.add_machine_field_parser(field);
         }
 
-        let mut parsing_function = self.add_child(Ast::ParsingFunction(ParsingFunctionAstNode {
+        let mut parsing_function = self.add_child(Ast::ParsingFunction(ParsingFunction {
             message_name: message.name.clone(),
         }));
 
@@ -505,7 +328,7 @@ impl AstNode {
     }
 
     fn add_machine_action_hook(&mut self, field: &bpir::representation::Field) {
-        self.add_child(Ast::MachineActionHook(MachineActionHookAstNode {
+        self.add_child(Ast::MachineActionHook(MachineActionHook {
             name: field.name.clone(),
         }));
     }
@@ -526,7 +349,7 @@ impl AstNode {
         field: &bpir::representation::Field,
         regex: &bpir::representation::RegexFieldType,
     ) {
-        self.add_child(Ast::RegexMachineField(RegexMachineFieldAstNode {
+        self.add_child(Ast::RegexMachineField(RegexMachineField {
             string_sequence: regex.regex.clone(),
             name: field.name.clone(),
         }));
