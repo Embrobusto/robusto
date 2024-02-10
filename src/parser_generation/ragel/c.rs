@@ -13,6 +13,7 @@ use std::vec::Vec;
 
 use super::common;
 
+#[derive(Debug)]
 struct GenerationState {
     // Current indent.
     indent: usize,
@@ -24,6 +25,7 @@ impl GenerationState {
     }
 }
 
+#[derive(Debug)]
 struct ParsingFunciton {
     message_name: String,
 }
