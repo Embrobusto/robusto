@@ -55,6 +55,7 @@ pub trait CodeGeneration {
     }
 }
 
+
 /// Will DFS-traverse the tree, first invoking its `generate_code` method, then
 /// that of its children, and finally `generate_code_post_iter`.
 ///
@@ -70,10 +71,17 @@ where
     for child in &mut *ast {
         ret.append(&mut child.generate_code(&mut code_generation_state));
     }
-
+;
     ret.append(&mut ast.generate_code_post_iter(&mut code_generation_state));
 
     ret
 }
 
 // TODO: `struct Ast` for code chunks
+
+
+pub struct MockCodeGenerator {
+}
+
+impl CodeGeneration for MockCodeGenerator {
+}
