@@ -378,6 +378,15 @@ impl From<&Protocol> for HeaderAstNode {
     }
 }
 
+impl CodeGeneration for HeaderAstNode {
+    fn generate_code(
+        &self,
+        code_generation_state: &mut codegen::CodeGenerationState,
+    ) -> LinkedList<CodeChunk> {
+        self.ast_node.generate_code(code_generation_state)
+    }
+}
+
 /// C-specific Ragel AST
 pub struct Generator<'a> {
     ast: &'a parser_generation::ragel::common::AstNode,
