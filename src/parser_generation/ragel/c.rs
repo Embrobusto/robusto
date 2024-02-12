@@ -1,13 +1,10 @@
-use crate::bpir::representation::Message;
-/// Generates C code from procedural representation
-use crate::parser_generation;
-use crate::parser_generation::ragel::common;
-use crate::utility;
-use crate::utility::codegen;
-use crate::utility::codegen::CodeChunk;
 use crate::bpir::representation::Protocol;
+use crate::parser_generation::ragel::common;
+use crate::parser_generation;
+use crate::utility::codegen::{CodeChunk, CodeGeneration, MockCodeGenerator};
+use crate::utility::codegen;
+use crate::utility;
 use log;
-use std;
 use std::collections::LinkedList;
 use std::string::String;
 use std::vec::Vec;
@@ -298,16 +295,60 @@ impl AstNode {
     fn add_child(&mut self, ast_node_type: AstNodeType) -> &mut AstNode {
         self.children.push(AstNode {
             ast_node_type,
-            children: Vec::new()
+            children: Vec::new(),
         });
 
         self.children.last_mut().unwrap()
     }
 }
 
+impl CodeGeneration for AstNode {
+    fn generate_code(
+        &self,
+        code_generation_state: &mut codegen::CodeGenerationState,
+    ) -> LinkedList<CodeChunk> {
+        // Erase the type to spare some code
+        let mock_code_generator = codegen::MockCodeGenerator {};
+        let code_generator: &dyn CodeGeneration = match self.ast_node_type {
+            AstNodeType::ParsingFunction(ref node) => node,
+            AstNodeType::ParserStateStruct(ref node) => node,
+            AstNodeType::ParserStateInitFunction(ref node) => node,
+            AstNodeType::MessageStruct(ref node) => node,
+            AstNodeType::MessageStructMember(ref node) => node,
+            _ => {
+                log::warn!("Unhandled node, skipping");
+
+                &mock_code_generator
+            }
+        };
+
+        // Perform initial code generation
+        let mut ret = code_generator.generate_code(code_generation_state);
+
+        // Traverse children in the same manner
+        for child in &self.children {
+            ret.append(&mut child.generate_code(code_generation_state));
+        }
+
+        // Make a post-traverse generation
+        ret.append(&mut code_generator.generate_code_post_iter(code_generation_state));
+
+        ret
+    }
+}
+
 /// AST tree for generating C source files
 pub struct SourceAstNode {
     ast_node: AstNode,
+}
+
+impl CodeGeneration for SourceAstNode {
+    fn generate_code(
+        &self,
+        code_generation_state: &mut codegen::CodeGenerationState,
+    ) -> LinkedList<CodeChunk> {
+        self.generate_code(code_generation_state)
+    }
 }
 
 impl From<&Protocol> for SourceAstNode {
