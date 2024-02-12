@@ -38,7 +38,10 @@ pub trait CodeGeneration {
     fn generate_code(
         &self,
         code_generation_state: &mut CodeGenerationState,
-    ) -> LinkedList<CodeChunk>;
+    ) -> LinkedList<CodeChunk>
+    {
+        LinkedList::<CodeChunk>::new()
+    }
 
     /// A hook which gets invoked after the AST's children have been traversed.
     /// Usually it is used for generating content nested in brackets of some
