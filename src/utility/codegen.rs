@@ -71,7 +71,7 @@ where
     for child in &mut *ast {
         ret.append(&mut child.generate_code(&mut code_generation_state));
     }
-;
+
     ret.append(&mut ast.generate_code_post_iter(&mut code_generation_state));
 
     ret
