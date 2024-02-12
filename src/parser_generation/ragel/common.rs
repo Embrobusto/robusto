@@ -317,3 +317,9 @@ impl AstNode {
         }));
     }
 }
+
+pub struct MockCodeGenerator {
+}
+
+impl CodeGeneration for MockCodeGenerator {
+}
