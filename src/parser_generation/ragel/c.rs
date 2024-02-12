@@ -1,9 +1,9 @@
 use crate::bpir::representation::Protocol;
-use crate::parser_generation::ragel::common;
 use crate::parser_generation;
-use crate::utility::codegen::{CodeChunk, CodeGeneration, MockCodeGenerator};
-use crate::utility::codegen;
+use crate::parser_generation::ragel::common;
 use crate::utility;
+use crate::utility::codegen;
+use crate::utility::codegen::{CodeChunk, CodeGeneration, MockCodeGenerator};
 use log;
 use std::collections::LinkedList;
 use std::string::String;
