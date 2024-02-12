@@ -347,7 +347,7 @@ impl CodeGeneration for SourceAstNode {
         &self,
         code_generation_state: &mut codegen::CodeGenerationState,
     ) -> LinkedList<CodeChunk> {
-        self.generate_code(code_generation_state)
+        self.ast_node.generate_code(code_generation_state)
     }
 }
 
