@@ -1,3 +1,5 @@
+use crate::parser_generation;
+use crate::utility::string::write_newlines_or_panic;
 use std::array::IntoIter;
 use std::collections::LinkedList;
 use std::io::{BufWriter, Write};
@@ -38,8 +40,7 @@ pub trait CodeGeneration {
     fn generate_code(
         &self,
         code_generation_state: &mut CodeGenerationState,
-    ) -> LinkedList<CodeChunk>
-    {
+    ) -> LinkedList<CodeChunk> {
         LinkedList::<CodeChunk>::new()
     }
 
@@ -55,8 +56,25 @@ pub trait CodeGeneration {
     }
 }
 
-pub struct MockCodeGenerator {
+impl<T: CodeGeneration> parser_generation::Write for T
+where
+    T: CodeGeneration,
+{
+    fn write<W: std::io::Write>(&self, buf_writer: &mut std::io::BufWriter<W>) {
+        use crate::utility::string::write_with_indent_or_panic;
+        let mut code_generation_state = CodeGenerationState::new();
+
+        for code_chunk in &self.generate_code(&mut code_generation_state) {
+            write_with_indent_or_panic(
+                buf_writer,
+                code_generation_state.indent,
+                code_chunk.code.as_bytes(),
+            );
+            write_newlines_or_panic(buf_writer, code_chunk.newlines);
+        }
+    }
 }
 
-impl CodeGeneration for MockCodeGenerator {
-}
+pub struct MockCodeGenerator {}
+
+impl CodeGeneration for MockCodeGenerator {}
