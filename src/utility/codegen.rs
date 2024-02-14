@@ -55,31 +55,6 @@ pub trait CodeGeneration {
     }
 }
 
-
-/// Will DFS-traverse the tree, first invoking its `generate_code` method, then
-/// that of its children, and finally `generate_code_post_iter`.
-///
-/// The `T` type most provide the behavior of an AST.
-pub fn generate_from_ast<T>(ast: &mut T) -> LinkedList<CodeChunk>
-where
-    T: CodeGeneration + Iterator<Item = dyn CodeGeneration>,
-    T::Item: Sized,
-{
-    let mut code_generation_state = CodeGenerationState::new();
-    let mut ret = ast.generate_code(&mut code_generation_state);
-
-    for child in &mut *ast {
-        ret.append(&mut child.generate_code(&mut code_generation_state));
-    }
-
-    ret.append(&mut ast.generate_code_post_iter(&mut code_generation_state));
-
-    ret
-}
-
-// TODO: `struct Ast` for code chunks
-
-
 pub struct MockCodeGenerator {
 }
 
