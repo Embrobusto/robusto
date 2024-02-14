@@ -150,3 +150,15 @@ pub fn write_with_indent_or_panic<W: std::io::Write>(
         }
     }
 }
+
+pub fn write_newlines_or_panic<W: std::io::Write>(
+    buf_writer: &mut std::io::BufWriter<W>,
+    newlines: usize,
+) {
+    for i in 0..newlines {
+        if let Err(_) = buf_writer.write(NEWLINE.as_bytes()) {
+            log::error!("Failed to write into file, panicking!");
+            panic!();
+        }
+    }
+}
