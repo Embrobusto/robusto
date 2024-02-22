@@ -65,7 +65,7 @@ where
         use crate::utility::string::write_with_indent_or_panic;
         let mut code_generation_state = CodeGenerationState::new();
 
-        for code_chunk in &self.generate_code(&mut code_generation_state) {
+        for code_chunk in self.generate_code(&mut code_generation_state).iter() {
             write_with_indent_or_panic(
                 buf_writer,
                 code_chunk.indent,
