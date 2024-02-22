@@ -57,6 +57,27 @@ pub trait CodeGeneration {
     }
 }
 
+pub trait AstNode<'a, T, I>: AsRef<I>
+where
+    T: Iterator<Item = &'a I>,
+    I: CodeGeneration + 'a,
+{
+    fn iter(&self) -> T;
+}
+
+impl<'a, T, I> CodeGeneration for dyn AstNode<'a, T, I>
+where
+    T: Iterator<Item = &'a I>,
+    I: CodeGeneration + 'a,
+{
+    fn generate_code(
+        &self,
+        code_generation_state: &mut CodeGenerationState,
+    ) -> LinkedList<CodeChunk> {
+        LinkedList::new()
+    }
+}
+
 impl<T: CodeGeneration> parser_generation::Write for T
 where
     T: CodeGeneration,
