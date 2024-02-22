@@ -350,6 +350,40 @@ impl From<&Protocol> for SourceAstNode {
             ast_node: AstNode::new(),
         };
 
+        // Generate message structs
+        // TODO: move it into header
+        for message in &protocol.messages {
+            let mut child = ret
+                .ast_node
+                .add_child(AstNodeType::MessageStruct(MessageStruct {
+                    message_name: message.name.clone(),
+                }));
+
+            for field in &message.fields {
+                child.add_child(AstNodeType::MessageStructMember(MessageStructMember {
+                    name: field.name.clone(),
+                    field_base_type: match field.field_type {
+                        representation::FieldType::Regex(ref regex) => FieldBaseType::I8,
+                        _ => {
+                            log::error!("Unhandled field type, panicking!");
+                            panic!();
+                        }
+                    },
+                    array_length: {
+                        let mut length = 1usize;
+
+                        for attribute in &field.attributes {
+                            if let representation::FieldAttribute::MaxLength(ref max_length) = attribute {
+                                length = max_length.value;
+                            }
+                        }
+
+                        length
+                    }
+                }));
+            }
+        }
+
         // TODO: build the tree
 
         ret
