@@ -352,6 +352,7 @@ impl From<&Protocol> for SourceAstNode {
 
         // Generate message structs
         // TODO: move it into header
+        // TODO: use the code from `common.rs`
         for message in &protocol.messages {
             let mut child = ret
                 .ast_node
