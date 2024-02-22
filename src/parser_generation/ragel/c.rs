@@ -1,4 +1,4 @@
-use crate::bpir::representation::Protocol;
+use crate::bpir::representation::{self, FieldAttribute, FieldType, Protocol};
 use crate::parser_generation;
 use crate::parser_generation::ragel::common;
 use crate::utility;
@@ -45,16 +45,7 @@ impl codegen::CodeGeneration for MessageStruct {
             1usize,
         ));
 
-        // Generate the content
         code_generation_state.indent += 1;
-        code_generation_state.indent -= 1;
-
-        // Close the bracket
-        ret.push_back(CodeChunk::new(
-            "}".to_string(),
-            code_generation_state.indent,
-            1usize,
-        ));
 
         ret
     }
@@ -68,7 +59,7 @@ impl codegen::CodeGeneration for MessageStruct {
 
         // Close the bracket
         ret.push_back(CodeChunk::new(
-            "}".to_string(),
+            "};".to_string(),
             code_generation_state.indent,
             1usize,
         ));
@@ -97,6 +88,7 @@ impl codegen::CodeGeneration for MessageStructMember {
         code_generation_state: &mut codegen::CodeGenerationState,
     ) -> LinkedList<CodeChunk> {
         let mut ret = LinkedList::<codegen::CodeChunk>::new();
+        log::debug!("indent: {0}", code_generation_state.indent);
 
         // Get a formatted C representation
         let formatted = format!(
