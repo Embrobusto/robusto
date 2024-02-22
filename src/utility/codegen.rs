@@ -4,6 +4,7 @@ use std::array::IntoIter;
 use std::collections::LinkedList;
 use std::io::{BufWriter, Write};
 use std::iter::Iterator;
+use std::path::Iter;
 
 pub struct CodeGenerationState {
     // Current indent.
@@ -67,7 +68,7 @@ where
         for code_chunk in &self.generate_code(&mut code_generation_state) {
             write_with_indent_or_panic(
                 buf_writer,
-                code_generation_state.indent,
+                code_chunk.indent,
                 code_chunk.code.as_bytes(),
             );
             write_newlines_or_panic(buf_writer, code_chunk.newlines);
