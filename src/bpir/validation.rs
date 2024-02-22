@@ -102,7 +102,7 @@ impl MessageFieldLint for RegexFieldMaxLengthLinter {
             _ => {}
         }
 
-        LintResult::Warning(format!(
+        LintResult::Error(format!(
             "in message {0} field {1} does not have MaxLength attribute",
             message.name, field.name
         ))
