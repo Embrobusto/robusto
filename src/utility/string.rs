@@ -88,7 +88,7 @@ pub fn write_indent_or_panic<W: std::io::Write>(
     indent: usize,
 ) {
     for i in 0..indent {
-        if let Err(_) = buf_writer.write("    ".as_bytes()) {
+        if let Err(_) = buf_writer.write(INDENT.as_bytes()) {
             log::error!("Failed to write into file, panicking!");
             panic!();
         }
