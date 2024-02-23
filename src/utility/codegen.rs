@@ -42,9 +42,7 @@ pub trait TreeBasedCodeGeneration {
     fn generate_code_pre_traverse(
         &self,
         code_generation_state: &mut CodeGenerationState,
-    ) -> LinkedList<CodeChunk> {
-        LinkedList::<CodeChunk>::new()
-    }
+    ) -> LinkedList<CodeChunk>;
 
     /// A hook which gets invoked after the AST's children have been traversed.
     /// Usually it is used for generating content nested in brackets of some
@@ -60,9 +58,7 @@ pub trait TreeBasedCodeGeneration {
 
 pub trait SubnodeAccess<T: CodeGeneration>
 {
-    fn iter(&self) -> std::slice::Iter<'_, T> {
-        std::slice::Iter::default()
-    }
+    fn iter(&self) -> std::slice::Iter<'_, T>;
 }
 
 pub trait CodeGeneration {
@@ -101,4 +97,11 @@ impl<T: CodeGeneration> parser_generation::Write for T {
 
 pub struct MockCodeGenerator {}
 
-impl TreeBasedCodeGeneration for MockCodeGenerator {}
+impl TreeBasedCodeGeneration for MockCodeGenerator {
+    fn generate_code_pre_traverse(
+        &self,
+        code_generation_state: &mut CodeGenerationState,
+    ) -> LinkedList<CodeChunk> {
+        LinkedList::new()
+    }
+}
