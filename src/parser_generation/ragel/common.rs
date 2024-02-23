@@ -192,11 +192,16 @@ impl TreeBasedCodeGeneration for MachineDefinition {
         &self,
         code_generation_state: &mut CodeGenerationState,
     ) -> LinkedList<CodeChunk> {
-        code_generation_state.indent -= 1;
 
         let mut ret = LinkedList::<CodeChunk>::new();
         // TODO: `main := <fields>`
+        ret.push_back(CodeChunk::new(
+            format!("main := {0};", self.fields.join(" ")),
+            code_generation_state.indent,
+            1usize
+        ));
 
+        code_generation_state.indent -= 1;
         ret.push_back(CodeChunk::new(
             "}%%".to_string(),
             code_generation_state.indent,
