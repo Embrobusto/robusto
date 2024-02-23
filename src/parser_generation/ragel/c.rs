@@ -433,31 +433,6 @@ impl From<&Protocol> for SourceAstNode {
     }
 }
 
-pub struct HeaderAstNode {
-    ast_node: AstNode,
-}
-
-impl From<&Protocol> for HeaderAstNode {
-    fn from(protocol: &Protocol) -> Self {
-        let mut ret = Self {
-            ast_node: AstNode::new(),
-        };
-
-        // TODO: build the tree
-
-        ret
-    }
-}
-
-impl TreeBasedCodeGeneration for HeaderAstNode {
-    fn generate_code_pre_traverse(
-        &self,
-        code_generation_state: &mut codegen::CodeGenerationState,
-    ) -> LinkedList<CodeChunk> {
-        self.ast_node.generate_code_pre_traverse(code_generation_state)
-    }
-}
-
 /// C-specific Ragel AST
 pub struct Generator<'a> {
     ast: &'a parser_generation::ragel::common::AstNode,
