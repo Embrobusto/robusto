@@ -377,6 +377,7 @@ impl TreeBasedCodeGeneration for AstNodeType {
             }
             // Delegate further generation to common
             AstNodeType::Common(ref node) => node.generate_code(code_generation_state),
+            AstNodeType::Root => LinkedList::new(),
             n => {
                 log::warn!("Unhandled node {:?}, skipping", n);
 
@@ -406,6 +407,7 @@ impl TreeBasedCodeGeneration for AstNodeType {
                 node.generate_code_post_traverse(code_generation_state)
             }
             AstNodeType::Common(ref node) => LinkedList::new(),
+            AstNodeType::Root => LinkedList::new(),
             n => {
                 log::warn!("Unhandled node {:?}, skipping", n);
 

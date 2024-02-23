@@ -270,6 +270,7 @@ impl TreeBasedCodeGeneration for AstNodeType {
             AstNodeType::RawCode(ref node) => {
                 node.generate_code_pre_traverse(code_generation_state)
             }
+            AstNodeType::Root => LinkedList::new(),
             n => {
                 log::warn!("Unhandled node {:?}, skipping", n);
 
@@ -297,6 +298,7 @@ impl TreeBasedCodeGeneration for AstNodeType {
             AstNodeType::RawCode(ref node) => {
                 node.generate_code_post_traverse(code_generation_state)
             }
+            AstNodeType::Root => LinkedList::new(),
             n => {
                 log::warn!("Unhandled node {:?}, skipping", n);
 
