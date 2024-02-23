@@ -220,12 +220,16 @@ impl codegen::TreeBasedCodeGeneration for ParserStateInitFunction {
             code_generation_state.indent,
             1usize,
         ));
-        ret.push_back(CodeChunk::new(
-            "%% write init;".to_string(),
-            code_generation_state.indent,
-            1usize,
-        ));
+
+        ret
+    }
+
+    fn generate_code_post_traverse(
+        &self,
+        code_generation_state: &mut codegen::CodeGenerationState,
+    ) -> LinkedList<CodeChunk> {
         code_generation_state.indent -= 1usize;
+        let mut ret = LinkedList::<codegen::CodeChunk>::new();
         ret.push_back(CodeChunk::new(
             "}".to_string(),
             code_generation_state.indent,

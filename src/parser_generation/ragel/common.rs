@@ -389,6 +389,8 @@ impl AstNode {
             },
         ));
 
+        parser_struct_init_function.add_child(AstNodeType::RawCode(RawCode::from("%% write init;")));
+
         let mut machine_definition_node =
             self.add_child(AstNodeType::MachineDefinition(MachineDefinition {
                 machine_name: message.name.clone(),
