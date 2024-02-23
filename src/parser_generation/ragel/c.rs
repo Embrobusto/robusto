@@ -449,12 +449,16 @@ impl From<&Protocol> for SourceAstNode {
                 }));
             }
 
+            // TODO: move it into header
             ret.add_child(AstNodeType::ParserStateStruct(ParserStateStruct { machine_name: message.name.clone()}));
         }
 
 
         let mut common = common::AstNode::from(protocol);
+
+        // Traverse over the tree and replace generic platform dependent definitions w/ concrete ones
         common.apply_replacement_recursive(SourceAstNode::preprocess_common);
+
         ret.add_child(AstNodeType::Common(common));
 
         SourceAstNode { ast_node: ret }
