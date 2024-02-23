@@ -182,11 +182,6 @@ impl TreeBasedCodeGeneration for MachineDefinition {
             code_generation_state.indent + 1,
             1usize,
         ));
-        ret.push_back(CodeChunk::new(
-            "write data;".to_string(),
-            code_generation_state.indent + 1,
-            1usize,
-        ));
 
         code_generation_state.indent += 1;
 
