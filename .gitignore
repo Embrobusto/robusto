@@ -2,3 +2,4 @@
 .vscode
 output.c.rl
 .commitmsg
+output.h.rl
