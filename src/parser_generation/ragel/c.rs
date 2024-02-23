@@ -2,10 +2,9 @@ use crate::bpir::representation::{self, FieldAttribute, FieldType, Protocol};
 use crate::parser_generation;
 use crate::parser_generation::ragel::common;
 use crate::utility;
-use crate::utility::codegen;
-use crate::utility::codegen::{
-    CodeChunk, TreeBasedCodeGeneration, SubnodeAccess, CodeGeneration,
-};
+use crate::parser_generation::ragel::common::FieldBaseType;
+use crate::utility::codegen::{self, RawCode};
+use crate::utility::codegen::{CodeChunk, TreeBasedCodeGeneration, SubnodeAccess, CodeGeneration};
 use log;
 use std::collections::LinkedList;
 use std::string::String;
@@ -24,14 +23,31 @@ impl GenerationState {
 }
 
 #[derive(Debug)]
-struct ParsingFunciton {
+struct ParsingFunction {
     message_name: String,
+}
+
+impl From<&mut common::ParsingFunction> for ParsingFunction {
+    fn from(value: &mut common::ParsingFunction) -> Self {
+        ParsingFunction {
+            message_name: value.message_name.clone()
+        }
+    }
 }
 
 #[derive(Debug)]
 pub struct MessageStruct {
     pub message_name: std::string::String,
 }
+
+impl From<&mut common::MessageStruct> for MessageStruct {
+    fn from(value: &mut common::MessageStruct) -> Self {
+        MessageStruct {
+            message_name: value.message_name.clone()
+        }
+    }
+}
+
 
 impl codegen::TreeBasedCodeGeneration for MessageStruct {
     fn generate_code_pre_traverse(
@@ -71,17 +87,22 @@ impl codegen::TreeBasedCodeGeneration for MessageStruct {
 }
 
 #[derive(Clone, Debug)]
-pub enum FieldBaseType {
-    I8,
-}
-
-#[derive(Clone, Debug)]
 pub struct MessageStructMember {
     pub name: std::string::String,
     pub field_base_type: FieldBaseType,
 
     /// If 0, it is considered just a field
     pub array_length: usize,
+}
+
+impl From<&mut common::MessageStructMember> for MessageStructMember {
+    fn from(value: &mut common::MessageStructMember) -> Self {
+        MessageStructMember {
+            name: value.name.clone(),
+            field_base_type: value.field_base_type.clone(),
+            array_length: value.array_length
+        }
+    }
 }
 
 impl TreeBasedCodeGeneration for MessageStructMember {
@@ -216,7 +237,7 @@ impl codegen::TreeBasedCodeGeneration for ParserStateInitFunction {
     }
 }
 
-impl codegen::TreeBasedCodeGeneration for ParsingFunciton {
+impl codegen::TreeBasedCodeGeneration for ParsingFunction {
     fn generate_code_pre_traverse(
         &self,
         code_generation_state: &mut codegen::CodeGenerationState,
@@ -267,7 +288,7 @@ impl codegen::TreeBasedCodeGeneration for ParsingFunciton {
 #[derive(Debug)]
 enum AstNodeType {
     Root,
-    ParsingFunction(ParsingFunciton),
+    ParsingFunction(ParsingFunction),
     ParserStateStruct(ParserStateStruct),
     ParserStateInitFunction(ParserStateInitFunction),
     MessageStruct(MessageStruct),
@@ -393,7 +414,6 @@ impl From<&Protocol> for SourceAstNode {
             ast_node_type: AstNodeType::Root,
             children: vec![]
         };
-        ret.add_child(AstNodeType::Common(common::AstNode::from(protocol)));
 
         // Generate message structs
         // TODO: move it into header
@@ -430,7 +450,29 @@ impl From<&Protocol> for SourceAstNode {
             }
         }
 
+        let mut common = common::AstNode::from(protocol);
+        common.apply_replacement_recursive(SourceAstNode::preprocess_common);
+        ret.add_child(AstNodeType::Common(common));
+
         SourceAstNode { ast_node: ret }
+    }
+}
+
+impl SourceAstNode {
+    /// Replaces platform-dependent code chunks
+    fn preprocess_common(common: &mut common::AstNode) {
+        match common.ast_node_type {
+            common::AstNodeType::ParsingFunction(ref mut node) => {
+                common.ast_node_type = common::AstNodeType::RawCode(RawCode::from(&ParsingFunction::from(node)));
+            },
+            common::AstNodeType::MessageStruct(ref mut node) => {
+                common.ast_node_type = common::AstNodeType::RawCode(RawCode::from(&MessageStruct::from(node)));
+            },
+            common::AstNodeType::MessageStructMember(ref mut node) => {
+                common.ast_node_type = common::AstNodeType::RawCode(RawCode::from(&MessageStructMember::from(node)));
+            },
+            _ => {},
+        }
     }
 }
 

@@ -304,6 +304,17 @@ impl AstNode {
         self.children.last_mut().unwrap()
     }
 
+    /// Visitor.
+    ///
+    /// Changes nodes of the tree recursively
+    pub fn apply_replacement_recursive(&mut self, apply_replacement: fn(&mut Self)) {
+        apply_replacement(self);
+
+        for subnode in &mut self.children {
+            subnode.apply_replacement_recursive(apply_replacement);
+        }
+    }
+
     fn add_message_parser(&mut self, message: &bpir::representation::Message) {
         self.add_child(AstNodeType::MachineHeader(MachineHeader {
             machine_name: message.name.clone(),
