@@ -1,11 +1,47 @@
 use crate::parser_generation;
 use crate::utility::string::write_newlines_or_panic;
+use std::string::String;
 use std::alloc::handle_alloc_error;
 use std::array::IntoIter;
-use std::collections::LinkedList;
+use std::collections::{linked_list, LinkedList};
 use std::io::{BufWriter, Write};
 use std::iter::Iterator;
 use std::path::Iter;
+
+
+/// Precompiled code
+#[derive(Clone, Debug)]
+pub struct RawCode {
+    code_chunk_pre_traverse: LinkedList<CodeChunk>,
+    code_chunk_post_traverse: LinkedList<CodeChunk>,
+}
+
+impl<T: TreeBasedCodeGeneration> From<&T> for RawCode {
+    fn from(value: &T) -> Self {
+        let mut code_generation_state = CodeGenerationState::new();
+
+        RawCode {
+            code_chunk_pre_traverse: value.generate_code_pre_traverse(&mut code_generation_state),
+            code_chunk_post_traverse: value.generate_code_post_traverse(&mut code_generation_state),
+        }
+    }
+}
+
+impl TreeBasedCodeGeneration for RawCode {
+    fn generate_code_pre_traverse(
+        &self,
+        code_generation_state: &mut CodeGenerationState,
+    ) -> LinkedList<CodeChunk> {
+        self.code_chunk_pre_traverse.clone()
+    }
+
+    fn generate_code_post_traverse(
+        &self,
+        code_generation_state: &mut CodeGenerationState,
+    ) -> LinkedList<CodeChunk> {
+        self.code_chunk_post_traverse.clone()
+    }
+}
 
 pub struct CodeGenerationState {
     // Current indent.
@@ -18,6 +54,7 @@ impl CodeGenerationState {
     }
 }
 
+#[derive(Clone, Debug)]
 pub struct CodeChunk {
     code: String,
 
@@ -56,20 +93,25 @@ pub trait TreeBasedCodeGeneration {
     }
 }
 
-pub trait SubnodeAccess<T: CodeGeneration>
-{
+pub trait SubnodeAccess<T: CodeGeneration> {
     fn iter(&self) -> std::slice::Iter<'_, T>;
 }
 
 pub trait CodeGeneration {
-    fn generate_code(&self, code_generation_state: &mut CodeGenerationState) -> LinkedList<CodeChunk>;
+    fn generate_code(
+        &self,
+        code_generation_state: &mut CodeGenerationState,
+    ) -> LinkedList<CodeChunk>;
 }
 
 impl<T> CodeGeneration for T
 where
-    T: SubnodeAccess<T> + TreeBasedCodeGeneration
+    T: SubnodeAccess<T> + TreeBasedCodeGeneration,
 {
-    fn generate_code(&self, code_generation_state: &mut CodeGenerationState) -> LinkedList<CodeChunk> {
+    fn generate_code(
+        &self,
+        code_generation_state: &mut CodeGenerationState,
+    ) -> LinkedList<CodeChunk> {
         let mut ret = LinkedList::new();
         ret.append(&mut self.generate_code_pre_traverse(code_generation_state));
 
