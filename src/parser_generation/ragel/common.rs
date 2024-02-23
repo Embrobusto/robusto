@@ -1,6 +1,8 @@
 use crate::bpir;
 use crate::bpir::representation::{FieldAttribute, FieldType};
-use crate::utility::codegen::{CodeChunk, CodeGenerationState, SubnodeAccess, TreeBasedCodeGeneration, RawCode};
+use crate::utility::codegen::{
+    CodeChunk, CodeGenerationState, RawCode, SubnodeAccess, TreeBasedCodeGeneration,
+};
 use log;
 
 /// Generates an AST-like tree of patterns common for languages supporting
@@ -93,7 +95,7 @@ pub enum AstNodeType {
     MachineActionHook(MachineActionHook),
     MachineDefinition(MachineDefinition),
     RegexMachineField(RegexMachineField),
-    RawCode(RawCode)
+    RawCode(RawCode),
 }
 
 impl TreeBasedCodeGeneration for MachineHeader {
@@ -169,11 +171,25 @@ impl TreeBasedCodeGeneration for MachineDefinition {
             code_generation_state.indent + 1,
             1usize,
         ));
+
+        code_generation_state.indent += 1;
+
+        ret
+    }
+
+    fn generate_code_post_traverse(
+        &self,
+        code_generation_state: &mut CodeGenerationState,
+    ) -> LinkedList<CodeChunk> {
+        let mut ret = LinkedList::<CodeChunk>::new();
+
         ret.push_back(CodeChunk::new(
             "}%%".to_string(),
             code_generation_state.indent,
             1usize,
         ));
+
+        code_generation_state.indent -= 1;
 
         ret
     }
@@ -233,7 +249,7 @@ impl TreeBasedCodeGeneration for AstNodeType {
             }
             AstNodeType::RegexMachineField(ref node) => {
                 node.generate_code_pre_traverse(code_generation_state)
-            },
+            }
             AstNodeType::RawCode(ref node) => {
                 node.generate_code_pre_traverse(code_generation_state)
             }
@@ -260,7 +276,7 @@ impl TreeBasedCodeGeneration for AstNodeType {
             }
             AstNodeType::RegexMachineField(ref node) => {
                 node.generate_code_post_traverse(code_generation_state)
-            },
+            }
             AstNodeType::RawCode(ref node) => {
                 node.generate_code_post_traverse(code_generation_state)
             }
