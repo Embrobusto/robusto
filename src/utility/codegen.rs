@@ -48,6 +48,8 @@ impl TreeBasedCodeGeneration for RawCode {
         &self,
         code_generation_state: &mut CodeGenerationState,
     ) -> LinkedList<CodeChunk> {
+        // Heuristic: apply whatever indent was used during creation of the object + the current indent
+        // TODO: won't fit for the negative indents
         self.code_chunk_pre_traverse
             .iter()
             .map(|chunk| CodeChunk {
