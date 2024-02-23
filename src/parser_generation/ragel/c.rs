@@ -165,6 +165,7 @@ impl codegen::TreeBasedCodeGeneration for ParserStateStruct {
     }
 }
 
+#[derive(Debug)]
 pub struct ParserStateInitFunction {
     pub machine_name: String,
 }
@@ -263,6 +264,7 @@ impl codegen::TreeBasedCodeGeneration for ParsingFunciton {
     }
 }
 
+#[derive(Debug)]
 enum AstNodeType {
     Root,
     ParsingFunction(ParsingFunciton),
@@ -270,7 +272,7 @@ enum AstNodeType {
     ParserStateInitFunction(ParserStateInitFunction),
     MessageStruct(MessageStruct),
     MessageStructMember(MessageStructMember),
-    Common(common::AstNodeType),
+    Common(common::AstNode),
 }
 
 struct AstNode {
@@ -314,8 +316,7 @@ impl TreeBasedCodeGeneration for AstNode {
         &self,
         code_generation_state: &mut codegen::CodeGenerationState,
     ) -> LinkedList<CodeChunk> {
-        self.ast_node_type
-            .generate_code_post_traverse(code_generation_state)
+        self.ast_node_type.generate_code_post_traverse(code_generation_state)
     }
 }
 
@@ -332,8 +333,9 @@ impl TreeBasedCodeGeneration for AstNodeType {
             }
             AstNodeType::MessageStruct(ref node) => node.generate_code_pre_traverse(code_generation_state),
             AstNodeType::MessageStructMember(ref node) => node.generate_code_pre_traverse(code_generation_state),
-            _ => {
-                log::warn!("Unhandled node, skipping");
+            AstNodeType::Common(ref node) => node.generate_code_pre_traverse(code_generation_state),
+            n => {
+                log::warn!("Unhandled node {:?}, skipping", n);
 
                 LinkedList::new()
             }
@@ -360,8 +362,11 @@ impl TreeBasedCodeGeneration for AstNodeType {
             AstNodeType::MessageStructMember(ref node) => {
                 node.generate_code_post_traverse(code_generation_state)
             }
-            _ => {
-                log::warn!("Unhandled node, skipping");
+            AstNodeType::Common(ref node) => {
+                node.generate_code_post_traverse(code_generation_state)
+            }
+            n => {
+                log::warn!("Unhandled node {:?}, skipping", n);
 
                 LinkedList::new()
             }
@@ -385,20 +390,15 @@ impl CodeGeneration for SourceAstNode {
 
 impl From<&Protocol> for SourceAstNode {
     fn from(protocol: &Protocol) -> Self {
-        let common_ast_node = common::AstNode::from(protocol);
-        let mut ret = Self {
-            ast_node: AstNode::new(),
-        };
+        let mut ret = AstNode::new();
 
         // Generate message structs
         // TODO: move it into header
         // TODO: use the code from `common.rs`
         for message in &protocol.messages {
-            let mut child = ret
-                .ast_node
-                .add_child(AstNodeType::MessageStruct(MessageStruct {
-                    message_name: message.name.clone(),
-                }));
+            let mut child = ret.add_child(AstNodeType::MessageStruct(MessageStruct {
+                message_name: message.name.clone(),
+            }));
 
             for field in &message.fields {
                 child.add_child(AstNodeType::MessageStructMember(MessageStructMember {
@@ -427,9 +427,9 @@ impl From<&Protocol> for SourceAstNode {
             }
         }
 
-        // TODO: build the tree
+        let mut common = ret.add_child(AstNodeType::Common(common::AstNode::from(protocol)));
 
-        ret
+        SourceAstNode { ast_node: ret }
     }
 }
 
