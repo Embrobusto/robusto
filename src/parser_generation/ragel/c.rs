@@ -4,7 +4,7 @@ use crate::parser_generation::ragel::common;
 use crate::utility;
 use crate::utility::codegen;
 use crate::utility::codegen::{
-    CodeChunk, TreeBasedCodeGeneration, MockCodeGenerator, SubnodeAccess, CodeGeneration,
+    CodeChunk, TreeBasedCodeGeneration, SubnodeAccess, CodeGeneration,
 };
 use log;
 use std::collections::LinkedList;
