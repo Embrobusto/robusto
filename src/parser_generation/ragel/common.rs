@@ -1,4 +1,4 @@
-use crate::utility::codegen::{CodeChunk, CodeGeneration, CodeGenerationState};
+use crate::utility::codegen::{CodeChunk, TreeBasedCodeGeneration, CodeGenerationState};
 use crate::bpir::representation::{FieldAttribute, FieldType};
 use crate::bpir;
 use log;
@@ -95,8 +95,8 @@ pub enum AstNodeType {
     RegexMachineField(RegexMachineField),
 }
 
-impl CodeGeneration for MachineHeader {
-    fn generate_code(&self, generation_state: &mut CodeGenerationState) -> LinkedList<CodeChunk> {
+impl TreeBasedCodeGeneration for MachineHeader {
+    fn generate_code_pre_traverse(&self, generation_state: &mut CodeGenerationState) -> LinkedList<CodeChunk> {
         let mut ret = LinkedList::<CodeChunk>::new();
         ret.push_back(CodeChunk::new(
             "%%{".to_string(),
@@ -123,8 +123,8 @@ impl CodeGeneration for MachineHeader {
     }
 }
 
-impl CodeGeneration for MachineActionHook {
-    fn generate_code(
+impl TreeBasedCodeGeneration for MachineActionHook {
+    fn generate_code_pre_traverse(
         &self,
         code_generation_state: &mut CodeGenerationState,
     ) -> LinkedList<CodeChunk> {
@@ -144,8 +144,8 @@ impl CodeGeneration for MachineActionHook {
     }
 }
 
-impl CodeGeneration for MachineDefinition {
-    fn generate_code(
+impl TreeBasedCodeGeneration for MachineDefinition {
+    fn generate_code_pre_traverse(
         &self,
         code_generation_state: &mut CodeGenerationState,
     ) -> LinkedList<CodeChunk> {
@@ -175,8 +175,8 @@ impl CodeGeneration for MachineDefinition {
     }
 }
 
-impl CodeGeneration for RegexMachineField {
-    fn generate_code(
+impl TreeBasedCodeGeneration for RegexMachineField {
+    fn generate_code_pre_traverse(
         &self,
         code_generation_state: &mut CodeGenerationState,
     ) -> LinkedList<CodeChunk> {
@@ -321,5 +321,5 @@ impl AstNode {
 pub struct MockCodeGenerator {
 }
 
-impl CodeGeneration for MockCodeGenerator {
+impl TreeBasedCodeGeneration for MockCodeGenerator {
 }

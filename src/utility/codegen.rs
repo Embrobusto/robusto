@@ -1,5 +1,6 @@
 use crate::parser_generation;
 use crate::utility::string::write_newlines_or_panic;
+use std::alloc::handle_alloc_error;
 use std::array::IntoIter;
 use std::collections::LinkedList;
 use std::io::{BufWriter, Write};
@@ -37,8 +38,8 @@ impl CodeChunk {
     }
 }
 
-pub trait CodeGeneration {
-    fn generate_code(
+pub trait TreeBasedCodeGeneration {
+    fn generate_code_pre_traverse(
         &self,
         code_generation_state: &mut CodeGenerationState,
     ) -> LinkedList<CodeChunk> {
@@ -49,7 +50,7 @@ pub trait CodeGeneration {
     /// Usually it is used for generating content nested in brackets of some
     /// sort, such as struct members. The implementation may be omitted, if a
     /// node is only supposed to be used as a leaf.
-    fn generate_code_post_iter(
+    fn generate_code_post_traverse(
         &self,
         code_generation_state: &mut CodeGenerationState,
     ) -> LinkedList<CodeChunk> {
@@ -57,31 +58,36 @@ pub trait CodeGeneration {
     }
 }
 
-pub trait AstNode<'a, T, I>: AsRef<I>
-where
-    T: Iterator<Item = &'a I>,
-    I: CodeGeneration + 'a,
+pub trait SubnodeAccess<T: TreeBasedCodeGeneration>
 {
-    fn iter(&self) -> T;
-}
-
-impl<'a, T, I> CodeGeneration for dyn AstNode<'a, T, I>
-where
-    T: Iterator<Item = &'a I>,
-    I: CodeGeneration + 'a,
-{
-    fn generate_code(
-        &self,
-        code_generation_state: &mut CodeGenerationState,
-    ) -> LinkedList<CodeChunk> {
-        LinkedList::new()
+    fn iter(&self) -> std::slice::Iter<'_, T> {
+        std::slice::Iter::default()
     }
 }
 
-impl<T: CodeGeneration> parser_generation::Write for T
+pub trait CodeGeneration {
+    fn generate_code(&self, code_generation_state: &mut CodeGenerationState) -> LinkedList<CodeChunk>;
+}
+
+impl<T> CodeGeneration for T
 where
-    T: CodeGeneration,
+    T: SubnodeAccess<T> + TreeBasedCodeGeneration
 {
+    fn generate_code(&self, code_generation_state: &mut CodeGenerationState) -> LinkedList<CodeChunk> {
+        let mut ret = LinkedList::new();
+        ret.append(&mut self.generate_code_pre_traverse(code_generation_state));
+
+        for subnode in self.iter() {
+            ret.append(&mut subnode.generate_code(code_generation_state));
+        }
+
+        ret.append(&mut self.generate_code_post_traverse(code_generation_state));
+
+        ret
+    }
+}
+
+impl<T: CodeGeneration> parser_generation::Write for T {
     fn write<W: std::io::Write>(&self, buf_writer: &mut std::io::BufWriter<W>) {
         use crate::utility::string::write_with_indent_or_panic;
         let mut code_generation_state = CodeGenerationState::new();
@@ -95,4 +101,4 @@ where
 
 pub struct MockCodeGenerator {}
 
-impl CodeGeneration for MockCodeGenerator {}
+impl TreeBasedCodeGeneration for MockCodeGenerator {}

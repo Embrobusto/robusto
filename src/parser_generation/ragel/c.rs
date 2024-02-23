@@ -3,7 +3,9 @@ use crate::parser_generation;
 use crate::parser_generation::ragel::common;
 use crate::utility;
 use crate::utility::codegen;
-use crate::utility::codegen::{CodeChunk, CodeGeneration, MockCodeGenerator};
+use crate::utility::codegen::{
+    CodeChunk, TreeBasedCodeGeneration, MockCodeGenerator, SubnodeAccess, CodeGeneration,
+};
 use log;
 use std::collections::LinkedList;
 use std::string::String;
@@ -31,8 +33,8 @@ pub struct MessageStruct {
     pub message_name: std::string::String,
 }
 
-impl codegen::CodeGeneration for MessageStruct {
-    fn generate_code(
+impl codegen::TreeBasedCodeGeneration for MessageStruct {
+    fn generate_code_pre_traverse(
         &self,
         code_generation_state: &mut codegen::CodeGenerationState,
     ) -> LinkedList<CodeChunk> {
@@ -50,7 +52,7 @@ impl codegen::CodeGeneration for MessageStruct {
         ret
     }
 
-    fn generate_code_post_iter(
+    fn generate_code_post_traverse(
         &self,
         code_generation_state: &mut codegen::CodeGenerationState,
     ) -> LinkedList<CodeChunk> {
@@ -82,8 +84,8 @@ pub struct MessageStructMember {
     pub array_length: usize,
 }
 
-impl codegen::CodeGeneration for MessageStructMember {
-    fn generate_code(
+impl codegen::TreeBasedCodeGeneration for MessageStructMember {
+    fn generate_code_pre_traverse(
         &self,
         code_generation_state: &mut codegen::CodeGenerationState,
     ) -> LinkedList<CodeChunk> {
@@ -132,8 +134,8 @@ struct ParserStateStruct {
     machine_name: String,
 }
 
-impl codegen::CodeGeneration for ParserStateStruct {
-    fn generate_code(
+impl codegen::TreeBasedCodeGeneration for ParserStateStruct {
+    fn generate_code_pre_traverse(
         &self,
         code_generation_state: &mut codegen::CodeGenerationState,
     ) -> LinkedList<codegen::CodeChunk> {
@@ -167,8 +169,8 @@ pub struct ParserStateInitFunction {
     pub machine_name: String,
 }
 
-impl codegen::CodeGeneration for ParserStateInitFunction {
-    fn generate_code(
+impl codegen::TreeBasedCodeGeneration for ParserStateInitFunction {
+    fn generate_code_pre_traverse(
         &self,
         code_generation_state: &mut codegen::CodeGenerationState,
     ) -> LinkedList<CodeChunk> {
@@ -213,8 +215,8 @@ impl codegen::CodeGeneration for ParserStateInitFunction {
     }
 }
 
-impl codegen::CodeGeneration for ParsingFunciton {
-    fn generate_code(
+impl codegen::TreeBasedCodeGeneration for ParsingFunciton {
+    fn generate_code_pre_traverse(
         &self,
         code_generation_state: &mut codegen::CodeGenerationState,
     ) -> LinkedList<codegen::CodeChunk> {
@@ -294,38 +296,76 @@ impl AstNode {
     }
 }
 
-impl CodeGeneration for AstNode {
-    fn generate_code(
+impl SubnodeAccess<AstNode> for AstNode {
+    fn iter(&self) -> std::slice::Iter<'_, AstNode> {
+        self.children.iter()
+    }
+}
+
+impl TreeBasedCodeGeneration for AstNode {
+    fn generate_code_pre_traverse(
         &self,
         code_generation_state: &mut codegen::CodeGenerationState,
     ) -> LinkedList<CodeChunk> {
-        // Erase the type to spare some code
-        let mock_code_generator = codegen::MockCodeGenerator {};
-        let code_generator: &dyn CodeGeneration = match self.ast_node_type {
-            AstNodeType::ParsingFunction(ref node) => node,
-            AstNodeType::ParserStateStruct(ref node) => node,
-            AstNodeType::ParserStateInitFunction(ref node) => node,
-            AstNodeType::MessageStruct(ref node) => node,
-            AstNodeType::MessageStructMember(ref node) => node,
+        self.ast_node_type.generate_code_pre_traverse(code_generation_state)
+    }
+
+    fn generate_code_post_traverse(
+        &self,
+        code_generation_state: &mut codegen::CodeGenerationState,
+    ) -> LinkedList<CodeChunk> {
+        self.ast_node_type
+            .generate_code_post_traverse(code_generation_state)
+    }
+}
+
+impl TreeBasedCodeGeneration for AstNodeType {
+    fn generate_code_pre_traverse(
+        &self,
+        code_generation_state: &mut codegen::CodeGenerationState,
+    ) -> LinkedList<CodeChunk> {
+        match self {
+            AstNodeType::ParsingFunction(ref node) => node.generate_code_pre_traverse(code_generation_state),
+            AstNodeType::ParserStateStruct(ref node) => node.generate_code_pre_traverse(code_generation_state),
+            AstNodeType::ParserStateInitFunction(ref node) => {
+                node.generate_code_pre_traverse(code_generation_state)
+            }
+            AstNodeType::MessageStruct(ref node) => node.generate_code_pre_traverse(code_generation_state),
+            AstNodeType::MessageStructMember(ref node) => node.generate_code_pre_traverse(code_generation_state),
             _ => {
                 log::warn!("Unhandled node, skipping");
 
-                &mock_code_generator
+                LinkedList::new()
             }
-        };
-
-        // Perform initial code generation
-        let mut ret = code_generator.generate_code(code_generation_state);
-
-        // Traverse children in the same manner
-        for child in &self.children {
-            ret.append(&mut child.generate_code(code_generation_state));
         }
+    }
 
-        // Make a post-traverse generation
-        ret.append(&mut code_generator.generate_code_post_iter(code_generation_state));
+    fn generate_code_post_traverse(
+        &self,
+        code_generation_state: &mut codegen::CodeGenerationState,
+    ) -> LinkedList<CodeChunk> {
+        match self {
+            AstNodeType::ParsingFunction(ref node) => {
+                node.generate_code_post_traverse(code_generation_state)
+            }
+            AstNodeType::ParserStateStruct(ref node) => {
+                node.generate_code_post_traverse(code_generation_state)
+            }
+            AstNodeType::ParserStateInitFunction(ref node) => {
+                node.generate_code_pre_traverse(code_generation_state)
+            }
+            AstNodeType::MessageStruct(ref node) => {
+                node.generate_code_post_traverse(code_generation_state)
+            }
+            AstNodeType::MessageStructMember(ref node) => {
+                node.generate_code_post_traverse(code_generation_state)
+            }
+            _ => {
+                log::warn!("Unhandled node, skipping");
 
-        ret
+                LinkedList::new()
+            }
+        }
     }
 }
 
@@ -374,13 +414,15 @@ impl From<&Protocol> for SourceAstNode {
                         let mut length = 1usize;
 
                         for attribute in &field.attributes {
-                            if let representation::FieldAttribute::MaxLength(ref max_length) = attribute {
+                            if let representation::FieldAttribute::MaxLength(ref max_length) =
+                                attribute
+                            {
                                 length = max_length.value;
                             }
                         }
 
                         length
-                    }
+                    },
                 }));
             }
         }
@@ -407,12 +449,12 @@ impl From<&Protocol> for HeaderAstNode {
     }
 }
 
-impl CodeGeneration for HeaderAstNode {
-    fn generate_code(
+impl TreeBasedCodeGeneration for HeaderAstNode {
+    fn generate_code_pre_traverse(
         &self,
         code_generation_state: &mut codegen::CodeGenerationState,
     ) -> LinkedList<CodeChunk> {
-        self.ast_node.generate_code(code_generation_state)
+        self.ast_node.generate_code_pre_traverse(code_generation_state)
     }
 }
 
