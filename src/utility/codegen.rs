@@ -1,5 +1,6 @@
 use crate::parser_generation;
 use crate::utility::string::write_newlines_or_panic;
+use std::str::FromStr;
 use std::string::String;
 use std::alloc::handle_alloc_error;
 use std::array::IntoIter;
@@ -14,6 +15,24 @@ use std::path::Iter;
 pub struct RawCode {
     code_chunk_pre_traverse: LinkedList<CodeChunk>,
     code_chunk_post_traverse: LinkedList<CodeChunk>,
+}
+
+impl From<&str> for RawCode {
+    fn from(value: &str) -> Self {
+        let mut ret = LinkedList::new();
+        ret.push_back(
+            CodeChunk {
+                code: value.into(),
+                indent: 0usize,
+                newlines: 0usize,
+            }
+        );
+
+        RawCode {
+            code_chunk_pre_traverse: ret,
+            code_chunk_post_traverse: LinkedList::new(),
+        }
+    }
 }
 
 impl<T: TreeBasedCodeGeneration> From<&T> for RawCode {
