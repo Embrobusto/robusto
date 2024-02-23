@@ -51,8 +51,6 @@ fn main() {
     let mut buf_writer = std::io::BufWriter::new(file);
     // let ast = robusto::parser_generation::ragel::common::AstNode::from_protocol(&protocol);
     let ast = robusto::parser_generation::ragel::common::AstNode::from(&protocol);
-    let c_generator = robusto::parser_generation::ragel::c::Generator::from_ragel_ast(&ast);
     let mut c_ast = robusto::parser_generation::ragel::c::SourceAstNode::from(&protocol);
     c_ast.write(&mut buf_writer);
-    // c_generator.write(&mut buf_writer);
 }
