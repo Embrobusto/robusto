@@ -371,7 +371,3 @@ impl AstNode {
         }));
     }
 }
-
-pub struct MockCodeGenerator {}
-
-impl TreeBasedCodeGeneration for MockCodeGenerator {}
