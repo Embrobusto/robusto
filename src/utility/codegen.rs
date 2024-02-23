@@ -58,7 +58,7 @@ pub trait TreeBasedCodeGeneration {
     }
 }
 
-pub trait SubnodeAccess<T: TreeBasedCodeGeneration>
+pub trait SubnodeAccess<T: CodeGeneration>
 {
     fn iter(&self) -> std::slice::Iter<'_, T> {
         std::slice::Iter::default()
