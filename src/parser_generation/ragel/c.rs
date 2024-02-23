@@ -433,7 +433,6 @@ impl CodeGeneration for SourceAstNode {
 
 impl From<&Protocol> for SourceAstNode {
     fn from(protocol: &Protocol) -> Self {
-
         let mut ret = AstNode {
             ast_node_type: AstNodeType::Root,
             children: vec![],
@@ -469,9 +468,10 @@ impl SourceAstNode {
                 common.ast_node_type = common::AstNodeType::RawCode(RawCode::from(
                     &ParserStateInitFunction::from(node),
                 ));
-            },
+            }
             common::AstNodeType::AccessSequence => {
-                common.ast_node_type = common::AstNodeType::RawCode("access aParserState->;".into());
+                common.ast_node_type =
+                    common::AstNodeType::RawCode("access aParserState->;".into());
             }
             _ => {}
         }
@@ -530,5 +530,14 @@ impl From<&Protocol> for HeaderAstNode {
         }
 
         HeaderAstNode { ast_node: ret }
+    }
+}
+
+impl CodeGeneration for HeaderAstNode {
+    fn generate_code(
+        &self,
+        code_generation_state: &mut codegen::CodeGenerationState,
+    ) -> LinkedList<CodeChunk> {
+        self.ast_node.generate_code(code_generation_state)
     }
 }
