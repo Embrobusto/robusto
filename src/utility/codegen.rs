@@ -1,14 +1,13 @@
 use crate::parser_generation;
 use crate::utility::string::write_newlines_or_panic;
-use std::str::FromStr;
-use std::string::String;
 use std::alloc::handle_alloc_error;
 use std::array::IntoIter;
 use std::collections::{linked_list, LinkedList};
 use std::io::{BufWriter, Write};
 use std::iter::Iterator;
 use std::path::Iter;
-
+use std::str::FromStr;
+use std::string::String;
 
 /// Precompiled code
 #[derive(Clone, Debug)]
@@ -20,13 +19,11 @@ pub struct RawCode {
 impl From<&str> for RawCode {
     fn from(value: &str) -> Self {
         let mut ret = LinkedList::new();
-        ret.push_back(
-            CodeChunk {
-                code: value.into(),
-                indent: 0usize,
-                newlines: 0usize,
-            }
-        );
+        ret.push_back(CodeChunk {
+            code: value.into(),
+            indent: 0usize,
+            newlines: 1usize,
+        });
 
         RawCode {
             code_chunk_pre_traverse: ret,
@@ -51,14 +48,28 @@ impl TreeBasedCodeGeneration for RawCode {
         &self,
         code_generation_state: &mut CodeGenerationState,
     ) -> LinkedList<CodeChunk> {
-        self.code_chunk_pre_traverse.clone()
+        self.code_chunk_pre_traverse
+            .iter()
+            .map(|chunk| CodeChunk {
+                code: chunk.code.clone(),
+                indent: chunk.indent + code_generation_state.indent,
+                newlines: chunk.newlines,
+            })
+            .collect()
     }
 
     fn generate_code_post_traverse(
         &self,
         code_generation_state: &mut CodeGenerationState,
     ) -> LinkedList<CodeChunk> {
-        self.code_chunk_post_traverse.clone()
+        self.code_chunk_post_traverse
+            .iter()
+            .map(|chunk| CodeChunk {
+                code: chunk.code.clone(),
+                indent: chunk.indent + code_generation_state.indent,
+                newlines: chunk.newlines,
+            })
+            .collect()
     }
 }
 
