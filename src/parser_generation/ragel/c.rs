@@ -168,12 +168,12 @@ impl codegen::TreeBasedCodeGeneration for ParserStateStruct {
         ));
         ret.push_back(CodeChunk::new(
             "int machineInitRequired;".to_string(),
-            code_generation_state.indent,
+            code_generation_state.indent + 1,
             1usize,
         ));
         ret.push_back(CodeChunk::new(
             "int cs;".to_string(),
-            code_generation_state.indent,
+            code_generation_state.indent + 1,
             1usize,
         ));
         ret.push_back(CodeChunk::new(
@@ -448,7 +448,10 @@ impl From<&Protocol> for SourceAstNode {
                     },
                 }));
             }
+
+            ret.add_child(AstNodeType::ParserStateStruct(ParserStateStruct { machine_name: message.name.clone()}));
         }
+
 
         let mut common = common::AstNode::from(protocol);
         common.apply_replacement_recursive(SourceAstNode::preprocess_common);
