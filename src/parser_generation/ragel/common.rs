@@ -239,9 +239,6 @@ impl TreeBasedCodeGeneration for AstNodeType {
         code_generation_state: &mut CodeGenerationState,
     ) -> LinkedList<CodeChunk> {
         match self {
-            AstNodeType::MachineHeader(ref node) => {
-                node.generate_code_pre_traverse(code_generation_state)
-            }
             AstNodeType::MachineActionHook(ref node) => {
                 node.generate_code_pre_traverse(code_generation_state)
             }
