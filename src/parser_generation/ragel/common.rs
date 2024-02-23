@@ -233,6 +233,9 @@ impl TreeBasedCodeGeneration for AstNodeType {
             }
             AstNodeType::RegexMachineField(ref node) => {
                 node.generate_code_pre_traverse(code_generation_state)
+            },
+            AstNodeType::RawCode(ref node) => {
+                node.generate_code_pre_traverse(code_generation_state)
             }
             n => {
                 log::warn!("Unhandled node {:?}, skipping", n);
@@ -256,6 +259,9 @@ impl TreeBasedCodeGeneration for AstNodeType {
                 node.generate_code_post_traverse(code_generation_state)
             }
             AstNodeType::RegexMachineField(ref node) => {
+                node.generate_code_post_traverse(code_generation_state)
+            },
+            AstNodeType::RawCode(ref node) => {
                 node.generate_code_post_traverse(code_generation_state)
             }
             n => {
