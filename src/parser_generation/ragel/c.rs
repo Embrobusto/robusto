@@ -507,6 +507,9 @@ impl SourceAstNode {
                 common.ast_node_type = common::AstNodeType::RawCode(RawCode::from(
                     &ParserStateInitFunction::from(node),
                 ));
+            },
+            common::AstNodeType::AccessSequence => {
+                common.ast_node_type = common::AstNodeType::RawCode("access aParserState->;".into());
             }
             _ => {}
         }

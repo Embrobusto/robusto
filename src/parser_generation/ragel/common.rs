@@ -102,6 +102,7 @@ pub enum AstNodeType {
     RegexMachineField(RegexMachineField),
     RawCode(RawCode),
     ParserStateInitFunction(ParserStateInitFunction),
+    AccessSequence,
 }
 
 impl TreeBasedCodeGeneration for MachineHeader {
@@ -125,7 +126,15 @@ impl TreeBasedCodeGeneration for MachineHeader {
             generation_state.indent + 1,
             1usize,
         ));
-        // TODO: `access parserState->` ...
+
+        ret
+    }
+
+    fn generate_code_post_traverse(
+        &self,
+        generation_state: &mut CodeGenerationState,
+    ) -> LinkedList<CodeChunk> {
+        let mut ret = LinkedList::<CodeChunk>::new();
         ret.push_back(CodeChunk::new(
             "}%%".to_string(),
             generation_state.indent,
@@ -349,6 +358,7 @@ impl AstNode {
         self.add_child(AstNodeType::MachineHeader(MachineHeader {
             machine_name: message.name.clone(),
         }));
+
         let mut message_struct = self.add_child(AstNodeType::MessageStruct(MessageStruct {
             message_name: message.name.clone(),
         }));
@@ -401,6 +411,7 @@ impl AstNode {
                 machine_name: message.name.clone(),
                 fields: message.fields.iter().map(|f| f.name.clone()).collect(),
             }));
+        machine_definition_node.add_child(AstNodeType::AccessSequence);
 
         for field in &message.fields {
             machine_definition_node.add_machine_action_hook(field);
