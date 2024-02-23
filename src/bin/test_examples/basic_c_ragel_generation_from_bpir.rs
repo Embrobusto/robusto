@@ -10,6 +10,7 @@ use robusto::{self, parser_generation::Write};
 use std;
 
 const OUTPUT_FILE_NAME: &'static str = "output.c.rl";
+const OUTPUT_HEADER_FILE_NAME: &'static str = "output.h.rl";
 
 fn make_message_bpir() -> robusto::bpir::representation::Message {
     let mut message = robusto::bpir::representation::Message {
@@ -50,7 +51,11 @@ fn main() {
     let file = std::fs::File::create(OUTPUT_FILE_NAME).unwrap();
     let mut buf_writer = std::io::BufWriter::new(file);
     // let ast = robusto::parser_generation::ragel::common::AstNode::from_protocol(&protocol);
-    let ast = robusto::parser_generation::ragel::common::AstNode::from(&protocol);
     let mut c_ast = robusto::parser_generation::ragel::c::SourceAstNode::from(&protocol);
     c_ast.write(&mut buf_writer);
+
+    let mut c_header_ast = robusto::parser_generation::ragel::c::HeaderAstNode::from(&protocol);
+    let header_file = std::fs::File::create(OUTPUT_HEADER_FILE_NAME).unwrap();
+    let mut header_buf_writer = std::io::BufWriter::new(header_file);
+    c_header_ast.write(&mut header_buf_writer);
 }
