@@ -178,7 +178,7 @@ impl TreeBasedCodeGeneration for MachineDefinition {
             1usize,
         ));
         ret.push_back(CodeChunk::new(
-            format!("machine {0}", self.machine_name),
+            format!("machine {0};", self.machine_name),
             code_generation_state.indent + 1,
             1usize,
         ));
