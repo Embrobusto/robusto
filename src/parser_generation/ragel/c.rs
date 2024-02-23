@@ -433,6 +433,57 @@ impl CodeGeneration for SourceAstNode {
 
 impl From<&Protocol> for SourceAstNode {
     fn from(protocol: &Protocol) -> Self {
+
+        let mut ret = AstNode {
+            ast_node_type: AstNodeType::Root,
+            children: vec![],
+        };
+        let mut common = common::AstNode::from(protocol);
+
+        // Traverse over the tree and replace generic platform dependent definitions w/ concrete ones
+        common.apply_replacement_recursive(SourceAstNode::preprocess_common);
+
+        ret.add_child(AstNodeType::Common(common));
+
+        SourceAstNode { ast_node: ret }
+    }
+}
+
+impl SourceAstNode {
+    /// Replaces platform-dependent code chunks
+    fn preprocess_common(common: &mut common::AstNode) {
+        match common.ast_node_type {
+            common::AstNodeType::ParsingFunction(ref mut node) => {
+                common.ast_node_type =
+                    common::AstNodeType::RawCode(RawCode::from(&ParsingFunction::from(node)));
+            }
+            common::AstNodeType::MessageStruct(ref mut node) => {
+                common.ast_node_type =
+                    common::AstNodeType::RawCode(RawCode::from(&MessageStruct::from(node)));
+            }
+            common::AstNodeType::MessageStructMember(ref mut node) => {
+                common.ast_node_type =
+                    common::AstNodeType::RawCode(RawCode::from(&MessageStructMember::from(node)));
+            }
+            common::AstNodeType::ParserStateInitFunction(ref mut node) => {
+                common.ast_node_type = common::AstNodeType::RawCode(RawCode::from(
+                    &ParserStateInitFunction::from(node),
+                ));
+            },
+            common::AstNodeType::AccessSequence => {
+                common.ast_node_type = common::AstNodeType::RawCode("access aParserState->;".into());
+            }
+            _ => {}
+        }
+    }
+}
+
+pub struct HeaderAstNode {
+    ast_node: AstNode,
+}
+
+impl From<&Protocol> for HeaderAstNode {
+    fn from(protocol: &Protocol) -> Self {
         let mut ret = AstNode {
             ast_node_type: AstNodeType::Root,
             children: vec![],
@@ -478,42 +529,6 @@ impl From<&Protocol> for SourceAstNode {
             }));
         }
 
-        let mut common = common::AstNode::from(protocol);
-
-        // Traverse over the tree and replace generic platform dependent definitions w/ concrete ones
-        common.apply_replacement_recursive(SourceAstNode::preprocess_common);
-
-        ret.add_child(AstNodeType::Common(common));
-
-        SourceAstNode { ast_node: ret }
-    }
-}
-
-impl SourceAstNode {
-    /// Replaces platform-dependent code chunks
-    fn preprocess_common(common: &mut common::AstNode) {
-        match common.ast_node_type {
-            common::AstNodeType::ParsingFunction(ref mut node) => {
-                common.ast_node_type =
-                    common::AstNodeType::RawCode(RawCode::from(&ParsingFunction::from(node)));
-            }
-            common::AstNodeType::MessageStruct(ref mut node) => {
-                common.ast_node_type =
-                    common::AstNodeType::RawCode(RawCode::from(&MessageStruct::from(node)));
-            }
-            common::AstNodeType::MessageStructMember(ref mut node) => {
-                common.ast_node_type =
-                    common::AstNodeType::RawCode(RawCode::from(&MessageStructMember::from(node)));
-            }
-            common::AstNodeType::ParserStateInitFunction(ref mut node) => {
-                common.ast_node_type = common::AstNodeType::RawCode(RawCode::from(
-                    &ParserStateInitFunction::from(node),
-                ));
-            },
-            common::AstNodeType::AccessSequence => {
-                common.ast_node_type = common::AstNodeType::RawCode("access aParserState->;".into());
-            }
-            _ => {}
-        }
+        HeaderAstNode { ast_node: ret }
     }
 }
