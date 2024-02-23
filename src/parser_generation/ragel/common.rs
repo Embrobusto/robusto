@@ -1,6 +1,6 @@
 use crate::bpir;
 use crate::bpir::representation::{FieldAttribute, FieldType};
-use crate::utility::codegen::{CodeChunk, CodeGenerationState, SubnodeAccess, TreeBasedCodeGeneration};
+use crate::utility::codegen::{CodeChunk, CodeGenerationState, SubnodeAccess, TreeBasedCodeGeneration, RawCode};
 use log;
 
 /// Generates an AST-like tree of patterns common for languages supporting
@@ -93,6 +93,7 @@ pub enum AstNodeType {
     MachineActionHook(MachineActionHook),
     MachineDefinition(MachineDefinition),
     RegexMachineField(RegexMachineField),
+    RawCode(RawCode)
 }
 
 impl TreeBasedCodeGeneration for MachineHeader {
