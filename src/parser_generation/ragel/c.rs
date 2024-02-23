@@ -363,9 +363,7 @@ impl TreeBasedCodeGeneration for AstNodeType {
             AstNodeType::MessageStructMember(ref node) => {
                 node.generate_code_post_traverse(code_generation_state)
             }
-            AstNodeType::Common(ref node) => {
-                node.generate_code_post_traverse(code_generation_state)
-            }
+            AstNodeType::Common(ref node) => LinkedList::new(),
             n => {
                 log::warn!("Unhandled node {:?}, skipping", n);
 
@@ -391,18 +389,22 @@ impl CodeGeneration for SourceAstNode {
 
 impl From<&Protocol> for SourceAstNode {
     fn from(protocol: &Protocol) -> Self {
-        let mut ret = AstNode::new();
+        let mut ret = AstNode {
+            ast_node_type: AstNodeType::Root,
+            children: vec![]
+        };
+        ret.add_child(AstNodeType::Common(common::AstNode::from(protocol)));
 
         // Generate message structs
         // TODO: move it into header
         // TODO: use the code from `common.rs`
         for message in &protocol.messages {
-            let mut child = ret.add_child(AstNodeType::MessageStruct(MessageStruct {
+            let mut message_struct = ret.add_child(AstNodeType::MessageStruct(MessageStruct {
                 message_name: message.name.clone(),
             }));
 
             for field in &message.fields {
-                child.add_child(AstNodeType::MessageStructMember(MessageStructMember {
+                message_struct.add_child(AstNodeType::MessageStructMember(MessageStructMember {
                     name: field.name.clone(),
                     field_base_type: match field.field_type {
                         representation::FieldType::Regex(ref regex) => FieldBaseType::I8,
@@ -427,8 +429,6 @@ impl From<&Protocol> for SourceAstNode {
                 }));
             }
         }
-
-        let mut common = ret.add_child(AstNodeType::Common(common::AstNode::from(protocol)));
 
         SourceAstNode { ast_node: ret }
     }
@@ -472,7 +472,7 @@ impl Generator<'_> {
             parser_generation::ragel::common::AstNodeType::MachineDefinition(ref node) => {
                 self.generate_machine_definition(ast_node, buf_writer, &node, generation_state);
             }
-            parser_generation::ragel::common::AstNodeType::None => {
+            parser_generation::ragel::common::AstNodeType::Root => {
                 self.generate_traverse_ast_node_children(ast_node, buf_writer, generation_state);
             }
             parser_generation::ragel::common::AstNodeType::ParsingFunction(ref node) => {

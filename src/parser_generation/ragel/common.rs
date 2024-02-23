@@ -1,6 +1,6 @@
 use crate::bpir;
 use crate::bpir::representation::{FieldAttribute, FieldType};
-use crate::utility::codegen::{CodeChunk, CodeGenerationState, TreeBasedCodeGeneration};
+use crate::utility::codegen::{CodeChunk, CodeGenerationState, SubnodeAccess, TreeBasedCodeGeneration};
 use log;
 
 /// Generates an AST-like tree of patterns common for languages supporting
@@ -78,7 +78,7 @@ pub struct MachineActionHook {
 #[derive(Debug)]
 pub enum AstNodeType {
     /// An empty representation for a subtre
-    None,
+    Root,
 
     // C-specific elements (TBD)
 
@@ -203,7 +203,7 @@ pub struct AstNode {
 impl From<&bpir::representation::Protocol> for AstNode {
     fn from(protocol: &bpir::representation::Protocol) -> Self {
         let mut root = AstNode {
-            ast_node_type: AstNodeType::None,
+            ast_node_type: AstNodeType::Root,
             children: vec![],
         };
 
@@ -221,10 +221,18 @@ impl TreeBasedCodeGeneration for AstNodeType {
         code_generation_state: &mut CodeGenerationState,
     ) -> LinkedList<CodeChunk> {
         match self {
-            AstNodeType::MachineHeader(ref node) => node.generate_code_pre_traverse(code_generation_state),
-            AstNodeType::MachineActionHook(ref node) => node.generate_code_pre_traverse(code_generation_state),
-            AstNodeType::MachineDefinition(ref node) => node.generate_code_pre_traverse(code_generation_state),
-            AstNodeType::RegexMachineField(ref node) => node.generate_code_pre_traverse(code_generation_state),
+            AstNodeType::MachineHeader(ref node) => {
+                node.generate_code_pre_traverse(code_generation_state)
+            }
+            AstNodeType::MachineActionHook(ref node) => {
+                node.generate_code_pre_traverse(code_generation_state)
+            }
+            AstNodeType::MachineDefinition(ref node) => {
+                node.generate_code_pre_traverse(code_generation_state)
+            }
+            AstNodeType::RegexMachineField(ref node) => {
+                node.generate_code_pre_traverse(code_generation_state)
+            }
             n => {
                 log::warn!("Unhandled node {:?}, skipping", n);
 
@@ -237,10 +245,18 @@ impl TreeBasedCodeGeneration for AstNodeType {
         code_generation_state: &mut CodeGenerationState,
     ) -> LinkedList<CodeChunk> {
         match self {
-            AstNodeType::MachineHeader(ref node) => node.generate_code_post_traverse(code_generation_state),
-            AstNodeType::MachineActionHook(ref node) => node.generate_code_post_traverse(code_generation_state),
-            AstNodeType::MachineDefinition(ref node) => node.generate_code_post_traverse(code_generation_state),
-            AstNodeType::RegexMachineField(ref node) => node.generate_code_post_traverse(code_generation_state),
+            AstNodeType::MachineHeader(ref node) => {
+                node.generate_code_post_traverse(code_generation_state)
+            }
+            AstNodeType::MachineActionHook(ref node) => {
+                node.generate_code_post_traverse(code_generation_state)
+            }
+            AstNodeType::MachineDefinition(ref node) => {
+                node.generate_code_post_traverse(code_generation_state)
+            }
+            AstNodeType::RegexMachineField(ref node) => {
+                node.generate_code_post_traverse(code_generation_state)
+            }
             n => {
                 log::warn!("Unhandled node {:?}, skipping", n);
 
@@ -252,17 +268,25 @@ impl TreeBasedCodeGeneration for AstNodeType {
 
 impl TreeBasedCodeGeneration for AstNode {
     fn generate_code_pre_traverse(
-            &self,
-            code_generation_state: &mut CodeGenerationState,
-        ) -> LinkedList<CodeChunk> {
-        self.ast_node_type.generate_code_pre_traverse(code_generation_state)
+        &self,
+        code_generation_state: &mut CodeGenerationState,
+    ) -> LinkedList<CodeChunk> {
+        self.ast_node_type
+            .generate_code_pre_traverse(code_generation_state)
     }
 
     fn generate_code_post_traverse(
-            &self,
-            code_generation_state: &mut CodeGenerationState,
-        ) -> LinkedList<CodeChunk> {
-        self.ast_node_type.generate_code_post_traverse(code_generation_state)
+        &self,
+        code_generation_state: &mut CodeGenerationState,
+    ) -> LinkedList<CodeChunk> {
+        self.ast_node_type
+            .generate_code_post_traverse(code_generation_state)
+    }
+}
+
+impl SubnodeAccess<AstNode> for AstNode {
+    fn iter(&self) -> std::slice::Iter<'_, AstNode> {
+        self.children.iter()
     }
 }
 
