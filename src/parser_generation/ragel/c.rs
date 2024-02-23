@@ -333,7 +333,8 @@ impl TreeBasedCodeGeneration for AstNodeType {
             }
             AstNodeType::MessageStruct(ref node) => node.generate_code_pre_traverse(code_generation_state),
             AstNodeType::MessageStructMember(ref node) => node.generate_code_pre_traverse(code_generation_state),
-            AstNodeType::Common(ref node) => node.generate_code_pre_traverse(code_generation_state),
+            // Delegate further generation to common
+            AstNodeType::Common(ref node) => node.generate_code(code_generation_state),
             n => {
                 log::warn!("Unhandled node {:?}, skipping", n);
 
