@@ -78,6 +78,11 @@ pub struct MachineActionHook {
 }
 
 #[derive(Debug)]
+pub struct ParserStateInitFunction {
+    pub machine_name: String,
+}
+
+#[derive(Debug)]
 pub enum AstNodeType {
     /// An empty representation for a subtre
     Root,
@@ -96,6 +101,7 @@ pub enum AstNodeType {
     MachineDefinition(MachineDefinition),
     RegexMachineField(RegexMachineField),
     RawCode(RawCode),
+    ParserStateInitFunction(ParserStateInitFunction),
 }
 
 impl TreeBasedCodeGeneration for MachineHeader {
@@ -190,7 +196,6 @@ impl TreeBasedCodeGeneration for MachineDefinition {
             code_generation_state.indent,
             1usize,
         ));
-
 
         ret
     }
@@ -377,6 +382,12 @@ impl AstNode {
                 }
             }));
         }
+
+        let mut parser_struct_init_function = self.add_child(AstNodeType::ParserStateInitFunction(
+            ParserStateInitFunction {
+                machine_name: message.name.clone(),
+            },
+        ));
 
         let mut machine_definition_node =
             self.add_child(AstNodeType::MachineDefinition(MachineDefinition {
