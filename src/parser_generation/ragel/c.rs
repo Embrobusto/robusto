@@ -84,7 +84,7 @@ pub struct MessageStructMember {
     pub array_length: usize,
 }
 
-impl codegen::TreeBasedCodeGeneration for MessageStructMember {
+impl TreeBasedCodeGeneration for MessageStructMember {
     fn generate_code_pre_traverse(
         &self,
         code_generation_state: &mut codegen::CodeGenerationState,
