@@ -125,6 +125,7 @@ impl TreeBasedCodeGeneration for MachineHeader {
             generation_state.indent + 1,
             1usize,
         ));
+        // TODO: `access parserState->` ...
         ret.push_back(CodeChunk::new(
             "}%%".to_string(),
             generation_state.indent,
@@ -190,6 +191,7 @@ impl TreeBasedCodeGeneration for MachineDefinition {
         code_generation_state.indent -= 1;
 
         let mut ret = LinkedList::<CodeChunk>::new();
+        // TODO: `main := <fields>`
 
         ret.push_back(CodeChunk::new(
             "}%%".to_string(),
