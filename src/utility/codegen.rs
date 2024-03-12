@@ -14,6 +14,12 @@ use std::string::String;
 pub struct RawCode {
     code_chunk_pre_traverse: LinkedList<CodeChunk>,
     code_chunk_post_traverse: LinkedList<CodeChunk>,
+
+    /// A diff for further increment.
+    ///
+    /// The `RawCode` instance will be traversed through later, so by the moment
+    /// the code is generated, `CodeGenerationState` does not represent an actual
+    /// state.
     indent_increment: isize,
 }
 
