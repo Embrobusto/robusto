@@ -14,6 +14,7 @@ use std::string::String;
 pub struct RawCode {
     code_chunk_pre_traverse: LinkedList<CodeChunk>,
     code_chunk_post_traverse: LinkedList<CodeChunk>,
+    indent_increment: isize,
 }
 
 impl From<&str> for RawCode {
@@ -28,6 +29,7 @@ impl From<&str> for RawCode {
         RawCode {
             code_chunk_pre_traverse: ret,
             code_chunk_post_traverse: LinkedList::new(),
+            indent_increment: 0isize,
         }
     }
 }
@@ -35,10 +37,15 @@ impl From<&str> for RawCode {
 impl<T: TreeBasedCodeGeneration> From<&T> for RawCode {
     fn from(value: &T) -> Self {
         let mut code_generation_state = CodeGenerationState::new();
+        let code_chunk_pre_traverse = value.generate_code_pre_traverse(&mut code_generation_state);
+        let traverse_indent = code_generation_state.indent;
+        let code_chunk_post_traverse = value.generate_code_post_traverse(&mut code_generation_state);
+        let indent_increment = traverse_indent as isize - code_generation_state.indent as isize;
 
         RawCode {
-            code_chunk_pre_traverse: value.generate_code_pre_traverse(&mut code_generation_state),
-            code_chunk_post_traverse: value.generate_code_post_traverse(&mut code_generation_state),
+            code_chunk_pre_traverse,
+            code_chunk_post_traverse,
+            indent_increment,
         }
     }
 }
@@ -50,20 +57,24 @@ impl TreeBasedCodeGeneration for RawCode {
     ) -> LinkedList<CodeChunk> {
         // Heuristic: apply whatever indent was used during creation of the object + the current indent
         // TODO: won't fit for the negative indents
-        self.code_chunk_pre_traverse
+        let mut ret = self.code_chunk_pre_traverse
             .iter()
             .map(|chunk| CodeChunk {
                 code: chunk.code.clone(),
                 indent: chunk.indent + code_generation_state.indent,
                 newlines: chunk.newlines,
             })
-            .collect()
+            .collect();
+        code_generation_state.increment_indent(self.indent_increment);
+
+        ret
     }
 
     fn generate_code_post_traverse(
         &self,
         code_generation_state: &mut CodeGenerationState,
     ) -> LinkedList<CodeChunk> {
+        code_generation_state.increment_indent(-self.indent_increment);
         self.code_chunk_post_traverse
             .iter()
             .map(|chunk| CodeChunk {
@@ -83,6 +94,19 @@ pub struct CodeGenerationState {
 impl CodeGenerationState {
     fn new() -> CodeGenerationState {
         CodeGenerationState { indent: 0 }
+    }
+
+    fn increment_indent(&mut self, increment: isize) {
+        if increment < 0isize && self.indent < increment.abs() as usize {
+            log::warn!(
+                "Indent value is less than 0, current indent: {0}, increment: {1}",
+                self.indent,
+                increment
+            );
+            self.indent = 0;
+        } else {
+            self.indent = (self.indent as isize + increment) as usize;
+        }
     }
 }
 
